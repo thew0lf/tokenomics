@@ -1,0 +1,78 @@
+from __future__ import annotations
+
+import json
+import sqlite3
+from pathlib import Path
+
+from .models import UsageEvent
+
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS usage_events (
+    event_id TEXT PRIMARY KEY,
+    session_id TEXT,
+    timestamp TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    model TEXT NOT NULL,
+    input_tokens INTEGER NOT NULL,
+    output_tokens INTEGER NOT NULL,
+    cache_read_tokens INTEGER NOT NULL,
+    cache_write_tokens INTEGER NOT NULL,
+    duration_ms INTEGER,
+    metadata_json TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_usage_events_session ON usage_events(session_id);
+CREATE INDEX IF NOT EXISTS idx_usage_events_timestamp ON usage_events(timestamp);
+"""
+
+
+class EventStore:
+    """Small local SQLite store. No network access is performed."""
+
+    def __init__(self, path: str | Path = ".tokenomics/tokenomics.db") -> None:
+        self.path = Path(path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        with self._connect() as conn:
+            conn.executescript(SCHEMA)
+
+    def _connect(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(self.path)
+        conn.row_factory = sqlite3.Row
+        return conn
+
+    def add(self, event: UsageEvent) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                """INSERT INTO usage_events
+                (event_id, session_id, timestamp, provider, model, input_tokens,
+                 output_tokens, cache_read_tokens, cache_write_tokens, duration_ms, metadata_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    event.event_id,
+                    event.session_id,
+                    event.timestamp.isoformat(),
+                    event.provider,
+                    event.model,
+                    event.input_tokens,
+                    event.output_tokens,
+                    event.cache_read_tokens,
+                    event.cache_write_tokens,
+                    event.duration_ms,
+                    json.dumps(event.metadata, sort_keys=True),
+                ),
+            )
+
+    def count(self) -> int:
+        with self._connect() as conn:
+            return int(conn.execute("SELECT COUNT(*) FROM usage_events").fetchone()[0])
+
+    def totals(self) -> dict[str, int]:
+        with self._connect() as conn:
+            row = conn.execute(
+                """SELECT COALESCE(SUM(input_tokens), 0) AS input_tokens,
+                          COALESCE(SUM(output_tokens), 0) AS output_tokens,
+                          COALESCE(SUM(cache_read_tokens), 0) AS cache_read_tokens,
+                          COALESCE(SUM(cache_write_tokens), 0) AS cache_write_tokens
+                   FROM usage_events"""
+            ).fetchone()
+        return dict(row)
