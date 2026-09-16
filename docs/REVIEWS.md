@@ -30,7 +30,7 @@ Each phase checks data exposure, secrets, filesystem/network access, input valid
 - Review result: local-only event/ledger model and deterministic analysis are appropriately separated from model calls.
 - Security result: raw conversation content is outside the persistence model and metadata is allowlisted.
 
-## Phase 2: Real AI integrations
+## Phase 2: Provider integrations
 
 - Senior AI Engineer review: **PASS**
 - Senior Software Engineer review: **PASS**
@@ -38,7 +38,7 @@ Each phase checks data exposure, secrets, filesystem/network access, input valid
 - Review result: provider adapters extract usage rather than conversation content; session aggregation remains provider-neutral.
 - Security result: API responses are not persisted wholesale; CLI capture has a 2 MiB input limit and only usage fields enter SQLite.
 
-## Phase 3: Optimization loop
+## Phase 3: Optimization measurement loop
 
 - Senior AI Engineer review: **PASS**
 - Senior Software Engineer review: **PASS**
