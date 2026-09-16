@@ -29,7 +29,9 @@ def build_parser() -> argparse.ArgumentParser:
     init = sub.add_parser("init", help="Initialize a local Tokenomics store.")
     init.add_argument("--path", default=".tokenomics/tokenomics.db")
 
-    record = sub.add_parser("record", help="Record token usage without storing conversation content.")
+    record = sub.add_parser(
+        "record", help="Record token usage without storing conversation content."
+    )
     record.add_argument("--provider", required=True)
     record.add_argument("--model", required=True)
     record.add_argument("--input", type=int, required=True, dest="input_tokens")
@@ -42,7 +44,9 @@ def build_parser() -> argparse.ArgumentParser:
     report = sub.add_parser("report", help="Show local token totals.")
     report.add_argument("--path", default=".tokenomics/tokenomics.db")
 
-    analyze = sub.add_parser("analyze", help="Run deterministic waste detectors against supplied text.")
+    analyze = sub.add_parser(
+        "analyze", help="Run deterministic waste detectors against supplied text."
+    )
     analyze.add_argument("text")
     analyze.add_argument("--calls-per-minute", type=float)
     analyze.add_argument("--repeated-tokens", type=int, default=0)
