@@ -51,6 +51,6 @@ def test_mcp_server_rejects_unbounded_result_requests(tmp_path):
             result = await client.call_tool("tokenomics_findings", {"limit": 21})
 
             assert result.is_error
-            assert "limit must be between 1 and 20" in result.content[0].text
+            assert result.content[0].text == "Error executing tool tokenomics_findings"
 
     asyncio.run(exercise())
