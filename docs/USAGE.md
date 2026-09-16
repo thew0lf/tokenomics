@@ -20,13 +20,15 @@ tokenomics-mcp
 
 Captures a locally available Anthropic Messages API JSON response. Tokenomics extracts only usage counters and writes a privacy-safe event. Input is limited to 2 MiB and response content is never written to SQLite.
 
+This command is a capture adapter, not a transparent Claude Desktop, Claude Code, or general AI-client integration.
+
 ### `tokenomics analyze`
 
-Runs deterministic detectors against supplied text and optional token measurements. Use `--record-losses` to persist findings in the Token Loss Ledger.
+Runs deterministic detectors against supplied text and optional token measurements. Use `--record-losses` to persist findings in the Token Loss Ledger. The command reports recommendations; it does not automatically modify or resubmit an AI request.
 
 ### `tokenomics outcome`
 
-Records measured recommendation results:
+Records the measured result of a recommendation after the user has tried the recommended change outside Tokenomics:
 
 ```bash
 tokenomics outcome LOSS_ID --actual-tokens-saved 720 --accepted
@@ -40,7 +42,7 @@ Installs a public knowledge pack only after HTTPS host validation, SHA-256 verif
 
 ### `tokenomics-dashboard`
 
-Runs the optional local dashboard on `127.0.0.1:8765`. It exposes aggregate usage, savings, and bounded findings.
+Runs the optional minimal local dashboard on `127.0.0.1:8765`. It exposes aggregate usage, savings, and bounded findings.
 
 ### `tokenomics-mcp`
 
@@ -50,16 +52,18 @@ Runs the optional MCP server over local stdio. Use `examples/mcp-client.json` as
 
 A finding should be understandable without reading a raw conversation. It should identify the pattern, evidence, estimated impact, confidence, and recommended action.
 
-## Optimization workflow
+## Optimization measurement workflow
 
 1. Detect a likely waste pattern.
 2. Explain the evidence.
 3. Estimate potential savings.
-4. Offer an optimization.
-5. Let the user approve it.
-6. Measure resulting usage.
+4. Report a deterministic recommendation.
+5. Let the user decide whether and how to apply it.
+6. Measure resulting usage separately.
 7. Compare actual savings with the estimate.
 8. Store the outcome locally.
+
+Tokenomics currently records and measures this workflow. It does not automatically submit optimized prompts to an AI provider.
 
 ## Privacy
 
