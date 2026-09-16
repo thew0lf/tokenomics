@@ -1,17 +1,15 @@
-import pytest
+from tokenomics.dashboard import create_app
 
 
-def test_dashboard_requires_optional_dependency(monkeypatch):
-    import builtins
-    from tokenomics import dashboard
+def test_dashboard_is_read_only_and_local(tmp_path):
+    from fastapi.testclient import TestClient
 
-    original = builtins.__import__
-
-    def blocked(name, *args, **kwargs):
-        if name == "fastapi":
-            raise ImportError("blocked for test")
-        return original(name, *args, **kwargs)
-
-    monkeypatch.setattr(builtins, "__import__", blocked)
-    with pytest.raises(RuntimeError, match="tokenomics\[dashboard\]"):
-        dashboard.create_app()
+    client = TestClient(create_app(tmp_path / "tokenomics.db"))
+    summary = client.get("/api/summary")
+    assert summary.status_code == 200
+    assert summary.json()["usage"]["events"] == 0
+    assert summary.json()["savings"] == {
+        "estimated_tokens": 0,
+        "actual_tokens_saved": 0,
+    }
+    assert client.get("/").status_code == 200
