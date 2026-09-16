@@ -51,7 +51,7 @@ class EventStore:
             conn.executescript(SCHEMA)
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self.path)
+        conn = sqlite3.connect(self.path, timeout=5)
         conn.row_factory = sqlite3.Row
         return conn
 
@@ -116,5 +116,30 @@ class EventStore:
                           COALESCE(SUM(cache_read_tokens), 0) AS cache_read_tokens,
                           COALESCE(SUM(cache_write_tokens), 0) AS cache_write_tokens
                    FROM usage_events"""
+            ).fetchone()
+        return dict(row)
+
+    def losses(self, limit: int = 100) -> list[dict[str, object]]:
+        """Return recent loss observations without private content."""
+        if limit < 1:
+            raise ValueError("limit must be positive")
+        with self._connect() as conn:
+            rows = conn.execute(
+                """SELECT id, created_at, loss_type, estimated_tokens, description,
+                          confidence, source, actual_tokens_saved, recommendation_accepted
+                   FROM loss_events
+                   ORDER BY created_at DESC
+                   LIMIT ?""",
+                (limit,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def savings(self) -> dict[str, int]:
+        """Summarize estimated and measured token savings from the loss ledger."""
+        with self._connect() as conn:
+            row = conn.execute(
+                """SELECT COALESCE(SUM(estimated_tokens), 0) AS estimated_tokens,
+                          COALESCE(SUM(actual_tokens_saved), 0) AS actual_tokens_saved
+                   FROM loss_events"""
             ).fetchone()
         return dict(row)
