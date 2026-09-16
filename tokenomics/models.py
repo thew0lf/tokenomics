@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID, uuid4
 
-
 SAFE_METADATA_KEYS = frozenset(
     {
         "cache_hit",
