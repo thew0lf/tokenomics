@@ -33,14 +33,22 @@ _ACTIONS = {
 }
 
 
+def recommendation_for_rule(rule_id: str) -> tuple[str, str]:
+    """Return the deterministic action and rationale for a finding rule."""
+    return _ACTIONS.get(
+        rule_id,
+        (
+            "Review the interaction for avoidable repeated work.",
+            "Potential token waste was detected.",
+        ),
+    )
+
+
 def recommend(findings: list[Finding]) -> list[Recommendation]:
     """Generate deterministic recommendations without calling an AI service."""
     results: list[Recommendation] = []
     for finding in findings:
-        action, rationale = _ACTIONS.get(
-            finding.rule_id,
-            ("Review the interaction for avoidable repeated work.", "Potential token waste was detected."),
-        )
+        action, rationale = recommendation_for_rule(finding.rule_id)
         results.append(
             Recommendation(
                 rule_id=finding.rule_id,
