@@ -19,7 +19,7 @@ except ImportError as exc:  # pragma: no cover - exercised by optional dependenc
         "The MCP extra is required. Install Tokenomics with 'pip install -e .[mcp]'."
     ) from exc
 
-from .recommendations import _ACTIONS
+from .recommendations import recommendation_for_rule
 from .storage import EventStore
 
 
@@ -49,13 +49,7 @@ def build_server(db_path: str | Path = ".tokenomics/tokenomics.db") -> MCPServer
         findings = store.losses(limit)
         results: list[dict[str, object]] = []
         for finding in findings:
-            action, rationale = _ACTIONS.get(
-                finding["loss_type"],
-                (
-                    "Review the interaction for avoidable repeated work.",
-                    "Potential token waste was detected.",
-                ),
-            )
+            action, rationale = recommendation_for_rule(str(finding["loss_type"]))
             results.append(
                 {
                     "finding_id": finding["id"],
