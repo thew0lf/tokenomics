@@ -1,0 +1,54 @@
+# Updating Tokenomics
+
+Tokenomics separates application releases from knowledge updates.
+
+## Application updates
+
+Application upgrades can change code, schemas, detection behavior, and interfaces. They should be versioned and documented in the changelog.
+
+Local user data should remain intact across normal upgrades. Schema migrations must be explicit and reversible where practical.
+
+## Knowledge updates
+
+Knowledge packs contain generalized detection rules and optimization strategies. They can be updated independently from the application.
+
+An intended update flow is:
+
+```text
+Tokenomics starts
+      |
+      v
+Check knowledge version
+      |
+      v
+Local version older?
+   /          \
+ yes           no
+  |             |
+Download      Continue
+validate
+  |
+Install
+  |
+Continue
+```
+
+A future implementation should validate knowledge packs before activation and retain the previous version so a bad update can be rolled back.
+
+## Compatibility
+
+Knowledge rules should declare the minimum Tokenomics version they require when behavior depends on a specific analyzer capability.
+
+Example:
+
+```yaml
+id: repeated-context
+version: 3
+requires:
+  tokenomics: ">=0.3"
+confidence: 0.94
+```
+
+## Privacy during updates
+
+Knowledge updates may download public rules. They must not require uploading private conversations, source code, project files, or other private usage data.
