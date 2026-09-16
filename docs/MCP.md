@@ -63,3 +63,7 @@ Every MCP change should receive both review passes:
 2. **Senior Software Engineer review**: API design, test coverage, error handling, dependency management, backwards compatibility, maintainability, and security.
 
 Both reviews should be completed before an MCP change is merged.
+
+## Validation
+
+The test suite uses the MCP SDK's in-process `Client(MCPServer)` path to exercise tool discovery and tool calls without starting a subprocess or opening a network port. This keeps MCP integration tests local and deterministic.
