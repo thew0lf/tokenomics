@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tokenomics"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local-first AI token usage observability and optimization"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -16,10 +16,15 @@ dependencies = []
 dev = [
   "pytest>=8.0",
   "ruff>=0.6",
+  "mcp>=2.2,<3",
+]
+mcp = [
+  "mcp>=2.2,<3",
 ]
 
 [project.scripts]
 tokenomics = "tokenomics.cli:main"
+tokenomics-mcp = "tokenomics.mcp_server:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["tokenomics"]
