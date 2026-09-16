@@ -7,7 +7,6 @@ from pathlib import Path
 from .ledger import LossEvent
 from .models import UsageEvent
 
-
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS usage_events (
     event_id TEXT PRIMARY KEY,
