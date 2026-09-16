@@ -99,6 +99,22 @@ class EventStore:
                 ),
             )
 
+    def update_loss_outcome(
+        self, loss_id: str, actual_tokens_saved: int, recommendation_accepted: bool
+    ) -> None:
+        """Record measured savings and recommendation acceptance for one loss."""
+        if actual_tokens_saved < 0:
+            raise ValueError("actual_tokens_saved must be non-negative")
+        with self._connect() as conn:
+            cursor = conn.execute(
+                """UPDATE loss_events
+                   SET actual_tokens_saved = ?, recommendation_accepted = ?
+                   WHERE id = ?""",
+                (actual_tokens_saved, int(recommendation_accepted), loss_id),
+            )
+            if cursor.rowcount != 1:
+                raise KeyError(f"loss event not found: {loss_id}")
+
     def count(self) -> int:
         with self._connect() as conn:
             return int(conn.execute("SELECT COUNT(*) FROM usage_events").fetchone()[0])
