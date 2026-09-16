@@ -1,3 +1,3 @@
-"""Tokenomics: local-first AI token observability and optimization."""
+"""Tokenomics core package."""
 
 __version__ = "0.1.0"
