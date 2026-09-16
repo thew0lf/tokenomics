@@ -6,11 +6,25 @@ from typing import Any
 import uuid
 
 
+SAFE_METADATA_KEYS = frozenset(
+    {
+        "cache_hit",
+        "finish_reason",
+        "http_status",
+        "retry_count",
+        "temperature",
+        "max_tokens",
+    }
+)
+
+
 @dataclass(slots=True)
 class UsageEvent:
     """A privacy-safe record of one AI interaction.
 
-    Raw prompts and responses are intentionally not part of this model.
+    Raw prompts and responses are intentionally not part of this model. Metadata
+    is allowlisted so callers cannot accidentally persist arbitrary conversation
+    or project data in the local event store.
     """
 
     provider: str
@@ -30,6 +44,12 @@ class UsageEvent:
             value = getattr(self, name)
             if value < 0:
                 raise ValueError(f"{name} cannot be negative")
+        if self.duration_ms is not None and self.duration_ms < 0:
+            raise ValueError("duration_ms cannot be negative")
+        unknown = set(self.metadata) - SAFE_METADATA_KEYS
+        if unknown:
+            names = ", ".join(sorted(unknown))
+            raise ValueError(f"metadata keys are not privacy-safe: {names}")
 
     @property
     def total_tokens(self) -> int:
