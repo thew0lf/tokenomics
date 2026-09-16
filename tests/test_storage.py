@@ -3,6 +3,9 @@ from tokenomics.models import UsageEvent
 from tokenomics.storage import EventStore
 
 
+LOCAL_SESSION_ID = "550e8400-e29b-41d4-a716-446655440000"
+
+
 def test_event_store_persists_usage(tmp_path):
     store = EventStore(tmp_path / "tokenomics.db")
     store.add(
@@ -13,7 +16,7 @@ def test_event_store_persists_usage(tmp_path):
             output_tokens=250,
             cache_read_tokens=100,
             cache_write_tokens=50,
-            session_id="session-1",
+            session_id=LOCAL_SESSION_ID,
         )
     )
 
