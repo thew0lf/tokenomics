@@ -21,6 +21,10 @@ Tokenomics must treat the following as private by default:
 - Names, email addresses, and other identifying information
 - Private conversation IDs
 
+Usage events use a Tokenomics-generated random UUID4 as their local session identifier. Provider conversation IDs are not accepted as persisted session identifiers.
+
+Usage metadata is allowlisted. Callers cannot add arbitrary metadata fields that could become a side channel for prompt, response, or project content.
+
 ## Public knowledge
 
 Tokenomics can distribute generalized knowledge such as:
@@ -35,6 +39,10 @@ Tokenomics can distribute generalized knowledge such as:
 - Recommendation outcomes in aggregate
 
 These are knowledge artifacts, not copies of private conversations.
+
+## MCP boundary
+
+The optional MCP server is local and read-oriented. It exposes aggregate usage, privacy-safe findings, savings, and deterministic recommendations. It does not expose prompts, responses, source code, file contents, paths, credentials, arbitrary SQL, or unrestricted filesystem access.
 
 ## Future network features
 
