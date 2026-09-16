@@ -32,3 +32,11 @@ def test_mcp_server_uses_local_store(tmp_path):
         "cache_read_tokens": 0,
         "cache_write_tokens": 0,
     }
+
+
+def test_mcp_server_rejects_unbounded_result_requests(tmp_path):
+    server = build_server(tmp_path / "tokenomics.db")
+    result = asyncio.run(server.call_tool("tokenomics_findings", {"limit": 21}))
+
+    assert result.is_error
+    assert "limit must be between 1 and 20" in result.content[0].text
