@@ -2,7 +2,6 @@ from tokenomics.ledger import LossEvent, LossType
 from tokenomics.models import UsageEvent
 from tokenomics.storage import EventStore
 
-
 LOCAL_SESSION_ID = "550e8400-e29b-41d4-a716-446655440000"
 
 
