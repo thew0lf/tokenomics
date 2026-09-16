@@ -1,3 +1,4 @@
+from tokenomics.ledger import LossEvent, LossType
 from tokenomics.models import UsageEvent
 from tokenomics.storage import EventStore
 
@@ -23,3 +24,16 @@ def test_event_store_persists_usage(tmp_path):
         "cache_read_tokens": 100,
         "cache_write_tokens": 50,
     }
+
+
+def test_event_store_persists_loss_event(tmp_path):
+    store = EventStore(tmp_path / "tokenomics.db")
+    store.add_loss(
+        LossEvent(
+            loss_type=LossType.POLLING,
+            estimated_tokens=12000,
+            description="AI invoked repeatedly without meaningful state changes.",
+            confidence=0.85,
+        )
+    )
+    assert store.loss_count() == 1
