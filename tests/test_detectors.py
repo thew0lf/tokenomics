@@ -1,3 +1,5 @@
+import pytest
+
 from tokenomics.detectors import detect_ai_polling, detect_context_repetition, detect_hidden_errors
 
 
@@ -24,3 +26,13 @@ def test_repeated_context_estimates_avoidable_tokens():
 
 def test_small_repetition_is_ignored():
     assert detect_context_repetition(100, 1000) == []
+
+
+def test_repeated_context_rejects_impossible_measurement():
+    with pytest.raises(ValueError, match="cannot exceed"):
+        detect_context_repetition(1001, 1000)
+
+
+def test_repeated_context_rejects_negative_measurement():
+    with pytest.raises(ValueError, match="non-negative"):
+        detect_context_repetition(-1, 1000)
