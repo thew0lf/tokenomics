@@ -2,6 +2,20 @@
 
 All notable changes to Tokenomics will be documented here.
 
+## Unreleased
+
+### Changed
+
+- Added an explicit production-hardening completion bar and release checklist.
+- Added versioned SQLite migration handling with protection against opening a
+  newer database in an older application release.
+- Made knowledge-pack replacement atomic and retained the prior pack for local
+  rollback.
+- Restricted new local database and knowledge-pack files to the current user on
+  POSIX systems.
+- Added dashboard validation responses, CLI error handling, distribution-build
+  verification, and CI formatting checks.
+
 ## 0.3.0
 
 ### Added

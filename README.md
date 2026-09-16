@@ -266,7 +266,12 @@ Community knowledge consists of generalized rules and deliberately contributed a
 - [x] Senior Software Engineer review
 - [x] Security check
 
-**All six planned MVP phases are implemented.** This means the planned local foundation is present. It does not mean every future provider integration, dashboard capability, automatic AI integration, or production packaging feature is complete. The next work is hardening, broader provider coverage, richer dashboard analytics, and production-quality packaging.
+**All six planned MVP phases are implemented.** This means the planned local
+foundation is present. It does not mean every future provider integration,
+dashboard capability, automatic AI integration, or production packaging feature
+is complete. The defined MVP hardening baseline is also complete; future work
+can focus on broader provider coverage, richer dashboard analytics, and
+production packaging expansion.
 
 ## Current implementation boundary
 
@@ -293,6 +298,10 @@ Not yet implemented as transparent integrations:
 
 These are extension/hardening items, not hidden capabilities.
 
+The current MVP hardening baseline is complete; see the
+[production-hardening checklist](docs/PRODUCTION_HARDENING.md) for its scope
+and verification record.
+
 ## Review gates
 
 Every significant feature passes two engineering review lenses and a security check at the phase boundary. See [docs/REVIEWS.md](docs/REVIEWS.md).
@@ -311,6 +320,7 @@ Every significant feature passes two engineering review lenses and a security ch
 - [Usage](docs/USAGE.md)
 - [Privacy](docs/PRIVACY.md)
 - [Updating](docs/UPDATING.md)
+- [Production hardening baseline](docs/PRODUCTION_HARDENING.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)
 - [Changelog](CHANGELOG.md)

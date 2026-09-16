@@ -13,9 +13,7 @@ def test_anthropic_adapter_extracts_only_usage():
         },
         "content": [{"text": "private response that must not be stored"}],
     }
-    event = AnthropicUsageAdapter().from_response(
-        response, model="claude-test", session_id=SESSION
-    )
+    event = AnthropicUsageAdapter().from_response(response, model="claude-test", session_id=SESSION)
     assert event.total_tokens == 1250
     assert event.cache_read_tokens == 400
     assert event.cache_write_tokens == 50

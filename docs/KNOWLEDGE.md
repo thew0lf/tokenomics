@@ -26,7 +26,13 @@ Tokenomics knowledge is public, versioned, and separate from private usage data.
 3. The client enforces a 2 MiB size limit.
 4. The client verifies the expected SHA-256 digest.
 5. The JSON schema is validated before installation.
-6. The new pack replaces the local copy only after validation.
+6. The new pack replaces the local copy atomically only after validation. The
+   previous pack is retained beside it with a `.previous` suffix for local,
+   manual rollback.
+
+To roll back, replace the active pack with its adjacent `.previous` file using
+the filesystem tools appropriate to the local operating system. Rollback is a
+local file recovery operation; it does not contact a network service.
 
 The application binary and knowledge packs are separate update channels. Knowledge can evolve without silently replacing executable code.
 

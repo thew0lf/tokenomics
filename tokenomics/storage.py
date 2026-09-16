@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -8,7 +9,9 @@ from pathlib import Path
 from .ledger import LossEvent
 from .models import UsageEvent
 
-SCHEMA = """
+SCHEMA_VERSION = 1
+
+SCHEMA_V1 = """
 CREATE TABLE IF NOT EXISTS usage_events (
     event_id TEXT PRIMARY KEY, session_id TEXT, timestamp TEXT NOT NULL,
     provider TEXT NOT NULL, model TEXT NOT NULL, input_tokens INTEGER NOT NULL,
@@ -26,20 +29,36 @@ CREATE INDEX IF NOT EXISTS idx_loss_events_created_at ON loss_events(created_at)
 CREATE INDEX IF NOT EXISTS idx_loss_events_type ON loss_events(loss_type);
 """
 
+MIGRATIONS: dict[int, str] = {1: SCHEMA_V1}
+
 
 class EventStore:
     """Small local SQLite store. No network access is performed."""
 
     def __init__(self, path: str | Path = ".tokenomics/tokenomics.db") -> None:
         self.path = Path(path)
+        parent_exists = self.path.parent.exists()
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        if not parent_exists:
+            _restrict_permissions(self.path.parent, 0o700)
         with self._connect() as conn:
-            conn.executescript(SCHEMA)
+            self._migrate(conn)
+        _restrict_permissions(self.path, 0o600)
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.path, timeout=5)
         conn.row_factory = sqlite3.Row
         return conn
+
+    def _migrate(self, conn: sqlite3.Connection) -> None:
+        current_version = int(conn.execute("PRAGMA user_version").fetchone()[0])
+        if current_version > SCHEMA_VERSION:
+            raise RuntimeError(
+                "database schema is newer than this Tokenomics release; upgrade Tokenomics before opening it"
+            )
+        for version in range(current_version + 1, SCHEMA_VERSION + 1):
+            conn.executescript(MIGRATIONS[version])
+            conn.execute(f"PRAGMA user_version = {version}")
 
     def add(self, event: UsageEvent) -> None:
         with self._connect() as conn:
@@ -48,9 +67,19 @@ class EventStore:
                 (event_id, session_id, timestamp, provider, model, input_tokens,
                  output_tokens, cache_read_tokens, cache_write_tokens, duration_ms, metadata_json)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (event.event_id, event.session_id, event.timestamp.isoformat(), event.provider,
-                 event.model, event.input_tokens, event.output_tokens, event.cache_read_tokens,
-                 event.cache_write_tokens, event.duration_ms, json.dumps(event.metadata, sort_keys=True)),
+                (
+                    event.event_id,
+                    event.session_id,
+                    event.timestamp.isoformat(),
+                    event.provider,
+                    event.model,
+                    event.input_tokens,
+                    event.output_tokens,
+                    event.cache_read_tokens,
+                    event.cache_write_tokens,
+                    event.duration_ms,
+                    json.dumps(event.metadata, sort_keys=True),
+                ),
             )
 
     def add_loss(self, event: LossEvent) -> None:
@@ -60,9 +89,17 @@ class EventStore:
                 (id, created_at, loss_type, estimated_tokens, description, confidence,
                  source, actual_tokens_saved, recommendation_accepted)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (event.id, event.created_at.isoformat(), event.loss_type.value, event.estimated_tokens,
-                 event.description, event.confidence, event.source, event.actual_tokens_saved,
-                 None if event.recommendation_accepted is None else int(event.recommendation_accepted)),
+                (
+                    event.id,
+                    event.created_at.isoformat(),
+                    event.loss_type.value,
+                    event.estimated_tokens,
+                    event.description,
+                    event.confidence,
+                    event.source,
+                    event.actual_tokens_saved,
+                    None if event.recommendation_accepted is None else int(event.recommendation_accepted),
+                ),
             )
 
     def update_loss_outcome(self, loss_id: str, actual_tokens_saved: int, recommendation_accepted: bool) -> None:
@@ -106,11 +143,19 @@ class EventStore:
                 (session_id, limit),
             ).fetchall()
         return [
-            UsageEvent(provider=row["provider"], model=row["model"], input_tokens=row["input_tokens"],
-                       output_tokens=row["output_tokens"], cache_read_tokens=row["cache_read_tokens"],
-                       cache_write_tokens=row["cache_write_tokens"], session_id=row["session_id"],
-                       timestamp=datetime.fromisoformat(row["timestamp"]), duration_ms=row["duration_ms"],
-                       metadata=json.loads(row["metadata_json"]), event_id=row["event_id"])
+            UsageEvent(
+                provider=row["provider"],
+                model=row["model"],
+                input_tokens=row["input_tokens"],
+                output_tokens=row["output_tokens"],
+                cache_read_tokens=row["cache_read_tokens"],
+                cache_write_tokens=row["cache_write_tokens"],
+                session_id=row["session_id"],
+                timestamp=datetime.fromisoformat(row["timestamp"]),
+                duration_ms=row["duration_ms"],
+                metadata=json.loads(row["metadata_json"]),
+                event_id=row["event_id"],
+            )
             for row in rows
         ]
 
@@ -121,7 +166,8 @@ class EventStore:
             rows = conn.execute(
                 """SELECT id, created_at, loss_type, estimated_tokens, description,
                           confidence, source, actual_tokens_saved, recommendation_accepted
-                   FROM loss_events ORDER BY created_at DESC LIMIT ?""", (limit,)
+                   FROM loss_events ORDER BY created_at DESC LIMIT ?""",
+                (limit,),
             ).fetchall()
         return [dict(row) for row in rows]
 
@@ -133,3 +179,9 @@ class EventStore:
                    FROM loss_events"""
             ).fetchone()
         return dict(row)
+
+
+def _restrict_permissions(path: Path, mode: int) -> None:
+    """Limit local data to the current user where POSIX permissions apply."""
+    if os.name == "posix":
+        os.chmod(path, mode)

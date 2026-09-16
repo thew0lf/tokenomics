@@ -6,7 +6,10 @@ Tokenomics separates application releases from knowledge updates.
 
 Application upgrades can change code, schemas, detection behavior, and interfaces. They should be versioned and documented in the changelog.
 
-Local user data should remain intact across normal upgrades. Schema migrations must be explicit and reversible where practical.
+Local user data should remain intact across normal upgrades. The local SQLite
+database records its schema version using `PRAGMA user_version`. Migrations are
+forward-only and applied in order; a newer database is rejected with a clear
+upgrade error rather than being opened by an older application version.
 
 ## Knowledge updates
 
@@ -33,7 +36,9 @@ Install
 Continue
 ```
 
-A future implementation should validate knowledge packs before activation and retain the previous version so a bad update can be rolled back.
+Tokenomics validates a candidate knowledge pack before activation, writes the
+validated file atomically, and preserves the previous active pack alongside it
+with a `.previous` suffix. Restoring that file is a local, manual rollback.
 
 ## Compatibility
 

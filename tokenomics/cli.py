@@ -88,7 +88,7 @@ def _finding_json(finding) -> dict[str, object]:
     }
 
 
-def main() -> None:
+def _main() -> None:
     args = build_parser().parse_args()
 
     if args.command == "init":
@@ -128,11 +128,16 @@ def main() -> None:
     if args.command == "outcome":
         store = EventStore(args.path)
         store.update_loss_outcome(args.loss_id, args.actual_tokens_saved, args.accepted)
-        print(json.dumps({
-            "loss_id": args.loss_id,
-            "actual_tokens_saved": args.actual_tokens_saved,
-            "recommendation_accepted": args.accepted,
-        }, indent=2))
+        print(
+            json.dumps(
+                {
+                    "loss_id": args.loss_id,
+                    "actual_tokens_saved": args.actual_tokens_saved,
+                    "recommendation_accepted": args.accepted,
+                },
+                indent=2,
+            )
+        )
         return
 
     if args.command == "knowledge":
@@ -148,13 +153,15 @@ def main() -> None:
     if args.record_losses:
         store = EventStore(args.path)
         for finding in findings:
-            store.add_loss(LossEvent(
-                loss_type=_FINDING_TO_LOSS.get(finding.rule_id, LossType.UNKNOWN),
-                estimated_tokens=finding.estimated_avoidable_tokens,
-                description=finding.message,
-                confidence=_confidence(finding.severity),
-                source=finding.rule_id,
-            ))
+            store.add_loss(
+                LossEvent(
+                    loss_type=_FINDING_TO_LOSS.get(finding.rule_id, LossType.UNKNOWN),
+                    estimated_tokens=finding.estimated_avoidable_tokens,
+                    description=finding.message,
+                    confidence=_confidence(finding.severity),
+                    source=finding.rule_id,
+                )
+            )
 
     output = {
         "findings": [_finding_json(finding) for finding in findings],
@@ -169,6 +176,15 @@ def main() -> None:
         ],
     }
     print(json.dumps(output, indent=2))
+
+
+def main() -> None:
+    """Run the CLI without exposing implementation tracebacks for expected input errors."""
+    try:
+        _main()
+    except (json.JSONDecodeError, KeyError, RuntimeError, UnicodeDecodeError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        raise SystemExit(2) from None
 
 
 if __name__ == "__main__":

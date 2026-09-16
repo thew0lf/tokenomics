@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
@@ -49,5 +51,24 @@ def install_pack(data: bytes, destination: str | Path) -> dict[str, object]:
     parsed = validate_pack(data)
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_bytes(data)
+    with NamedTemporaryFile("wb", dir=destination.parent, delete=False) as candidate:
+        candidate.write(data)
+        candidate.flush()
+        os.fsync(candidate.fileno())
+        candidate_path = Path(candidate.name)
+    try:
+        if destination.exists():
+            previous = destination.with_suffix(destination.suffix + ".previous")
+            previous.write_bytes(destination.read_bytes())
+            _restrict_permissions(previous)
+        _restrict_permissions(candidate_path)
+        os.replace(candidate_path, destination)
+        _restrict_permissions(destination)
+    finally:
+        candidate_path.unlink(missing_ok=True)
     return parsed
+
+
+def _restrict_permissions(path: Path) -> None:
+    if os.name == "posix":
+        os.chmod(path, 0o600)

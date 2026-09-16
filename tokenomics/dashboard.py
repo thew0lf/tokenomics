@@ -7,7 +7,7 @@ from .storage import EventStore
 
 def create_app(db_path: str = ".tokenomics/tokenomics.db"):
     try:
-        from fastapi import FastAPI
+        from fastapi import FastAPI, HTTPException
         from fastapi.responses import HTMLResponse
     except ImportError as exc:
         raise RuntimeError("Install tokenomics[dashboard] to use the dashboard") from exc
@@ -22,7 +22,7 @@ def create_app(db_path: str = ".tokenomics/tokenomics.db"):
     @app.get("/api/findings")
     def findings(limit: int = 20) -> list[dict[str, object]]:
         if limit < 1 or limit > 100:
-            raise ValueError("limit must be between 1 and 100")
+            raise HTTPException(status_code=422, detail="limit must be between 1 and 100")
         return store.losses(limit)
 
     @app.get("/", response_class=HTMLResponse)

@@ -60,9 +60,7 @@ def detect_ai_polling(text: str, calls_per_minute: float | None = None) -> list[
     ]
 
 
-def detect_context_repetition(
-    repeated_tokens: int, total_input_tokens: int, threshold: float = 0.50
-) -> list[Finding]:
+def detect_context_repetition(repeated_tokens: int, total_input_tokens: int, threshold: float = 0.50) -> list[Finding]:
     if repeated_tokens < 0 or total_input_tokens < 0:
         raise ValueError("token counts must be non-negative")
     if repeated_tokens > total_input_tokens and total_input_tokens > 0:

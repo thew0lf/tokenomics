@@ -13,3 +13,4 @@ def test_dashboard_is_read_only_and_local(tmp_path):
         "actual_tokens_saved": 0,
     }
     assert client.get("/").status_code == 200
+    assert client.get("/api/findings?limit=101").status_code == 422

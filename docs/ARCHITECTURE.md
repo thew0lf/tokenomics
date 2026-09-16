@@ -52,11 +52,17 @@ Captures usage metadata locally. The initial provider integration is Claude/Anth
 
 ### Local event store
 
-SQLite is the planned MVP persistence layer. It stores usage events, sessions, findings, recommendations, and outcomes on the user's machine.
+SQLite is the local MVP persistence layer. It stores privacy-safe usage events
+and Token Loss Ledger observations on the user's machine. A loss observation can
+record the user's decision and a measured outcome; recommendations are derived
+locally rather than persisted as a separate record type.
 
 ### Analyzer
 
-The analyzer should prefer deterministic checks. Examples include repeated context, token growth, high-frequency calls, polling patterns, retry loops, excessive output, and signs of hidden failures.
+The analyzer prefers deterministic checks. The current implementation detects
+repeated context from supplied token measurements, polling/repeated-execution
+constructs, hidden errors, and pipeline-status hazards. Additional patterns are
+future work rather than current detections.
 
 ### Token Loss Ledger
 
@@ -72,7 +78,9 @@ Each finding should explain:
 
 ### Recommendation engine
 
-Recommendations should be generated from local findings and versioned knowledge rules. User approval should be required before an optimization changes or resubmits an AI request.
+Recommendations are generated locally from findings and versioned knowledge
+rules. Tokenomics does not change or resubmit an AI request; the user decides
+whether to apply a recommendation outside the tool.
 
 ### Outcome measurement
 
@@ -86,7 +94,8 @@ Tokenomics must account for its own cost. Analysis should be throttled or skippe
 net_savings = tokens_avoided - tokenomics_overhead
 ```
 
-This applies whether the overhead is model tokens, CPU time, storage, or other measurable resources.
+The current implementation accounts for Tokenomics overhead expressed in tokens.
+CPU time, storage, and other resource-cost accounting are future extensions.
 
 ## Knowledge registry
 

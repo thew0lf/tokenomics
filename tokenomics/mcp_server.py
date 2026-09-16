@@ -63,24 +63,29 @@ def build_server(db_path: str | Path = ".tokenomics/tokenomics.db") -> MCPServer
         for finding in findings:
             rule_id = _LOSS_TO_RULE.get(str(finding["loss_type"]), str(finding["loss_type"]))
             action, rationale = recommendation_for_rule(rule_id)
-            results.append({
-                "finding_id": finding["id"],
-                "loss_type": finding["loss_type"],
-                "action": action,
-                "rationale": rationale,
-                "estimated_savings_tokens": finding["estimated_tokens"],
-            })
+            results.append(
+                {
+                    "finding_id": finding["id"],
+                    "loss_type": finding["loss_type"],
+                    "action": action,
+                    "rationale": rationale,
+                    "estimated_savings_tokens": finding["estimated_tokens"],
+                }
+            )
         return results
 
     @mcp.resource("tokenomics://summary")
     def summary() -> str:
         """Expose a compact local summary for an MCP host."""
-        return json.dumps({
-            "usage": {"events": store.count(), **store.totals()},
-            "savings": store.savings(),
-            "finding_count": store.loss_count(),
-            "privacy": "local-only; raw conversation and project content are not exposed",
-        }, sort_keys=True)
+        return json.dumps(
+            {
+                "usage": {"events": store.count(), **store.totals()},
+                "savings": store.savings(),
+                "finding_count": store.loss_count(),
+                "privacy": "local-only; raw conversation and project content are not exposed",
+            },
+            sort_keys=True,
+        )
 
     @mcp.resource("tokenomics://findings")
     def findings_resource() -> str:

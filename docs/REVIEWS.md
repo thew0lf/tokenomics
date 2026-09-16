@@ -75,3 +75,63 @@ Each phase checks data exposure, secrets, filesystem/network access, input valid
 **All planned phases passed the two engineering review lenses and the explicit security check.**
 
 Reviews are phase gates, not a substitute for automated tests or CI. Subsequent changes must repeat the appropriate review and security checks.
+
+## Production hardening baseline: 2026-09-16
+
+This review covers the hardening baseline documented in
+`PRODUCTION_HARDENING.md`. It is a role-based engineering review performed
+against the implementation and verification evidence; it is not an external
+security certification or a guarantee that future integrations are secure.
+
+### Senior AI Engineer review: **PASS**
+
+- The changes do not add model calls, new provider capture, automatic prompt
+  submission, or new data egress.
+- Tokenomics still distinguishes measured savings from estimates, and its
+  current overhead calculation remains explicitly token-based.
+- The provider, dashboard, knowledge, and MCP boundaries continue to exclude
+  raw prompts, responses, and project content.
+
+### Senior Software Engineer review: **PASS**
+
+- SQLite schema versioning is forward-only, recorded through `PRAGMA
+  user_version`, and fails safely when an older program sees a newer database.
+- Knowledge updates validate before activation, replace atomically, retain a
+  previous pack for recovery, and are covered by tests.
+- Expected CLI and dashboard validation failures return bounded user-facing
+  errors; tests cover the new behavior.
+
+### DevOps review: **PASS**
+
+- CI runs formatting, linting, tests, and a distribution build on Python 3.11,
+  3.12, and 3.13.
+- The release checklist requires a clean wheel-install verification and a
+  privacy/compatibility review.
+- Clean-environment checks passed on all supported Python versions; the built
+  wheel installed and its CLI started successfully.
+
+### Security specialist review: **PASS**
+
+- Newly created databases and knowledge packs are user-readable only on POSIX
+  platforms; no broad existing directory permissions are changed.
+- The migration path rejects incompatible newer databases rather than risking
+  downgrade corruption.
+- Knowledge updates remain HTTPS-host restricted, size limited, digest checked,
+  schema validated, and now avoid partial active-file replacement.
+- The dashboard remains loopback-bound and read-only; MCP remains bounded and
+  exposes no arbitrary SQL, filesystem, raw-content, or credential access.
+
+### Technical writer review: **PASS after corrections**
+
+- Reviewed README, contribution/release instructions, security guidance, MVP,
+  architecture, usage, updating, knowledge, MCP, privacy, and review records.
+- Corrected architecture claims to match the actual SQLite model, detector set,
+  recommendation behavior, and token-only overhead accounting.
+- Added the knowledge rollback instructions and reconciled the README's future
+  work wording with the completed hardening baseline.
+
+### Release decision
+
+**PASS.** The defined MVP production-hardening baseline and its required review
+lenses are complete. Remaining work is feature expansion and any additional
+production requirements a future deployment model introduces.

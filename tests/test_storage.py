@@ -1,6 +1,11 @@
+import os
+import sqlite3
+
+import pytest
+
 from tokenomics.ledger import LossEvent, LossType
 from tokenomics.models import UsageEvent
-from tokenomics.storage import EventStore
+from tokenomics.storage import SCHEMA_VERSION, EventStore
 
 LOCAL_SESSION_ID = "550e8400-e29b-41d4-a716-446655440000"
 
@@ -68,3 +73,21 @@ def test_event_store_rejects_unknown_loss_outcome(tmp_path):
         assert "missing" in str(exc)
     else:
         raise AssertionError("expected missing loss event to raise KeyError")
+
+
+def test_store_records_schema_version_and_rejects_newer_database(tmp_path):
+    path = tmp_path / "tokenomics.db"
+    EventStore(path)
+    with sqlite3.connect(path) as connection:
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
+        connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION + 1}")
+    with pytest.raises(RuntimeError, match="newer"):
+        EventStore(path)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX permissions are not available")
+def test_store_files_are_private_on_posix(tmp_path):
+    path = tmp_path / "private" / "tokenomics.db"
+    EventStore(path)
+    assert path.stat().st_mode & 0o777 == 0o600
+    assert path.parent.stat().st_mode & 0o777 == 0o700
