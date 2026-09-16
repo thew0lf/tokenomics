@@ -90,7 +90,7 @@ Record usage without storing the conversation:
 tokenomics record --provider anthropic --model claude --input 12000 --output 2500
 ```
 
-Capture an Anthropic API response from a local pipeline. Only usage fields are persisted:
+Capture a **locally available Anthropic Messages API JSON response**. Tokenomics extracts only usage counters and persists those fields; it does not automatically connect to or intercept Claude Desktop, Claude Code, or other AI clients:
 
 ```bash
 cat response.json | tokenomics capture --provider anthropic --model claude
@@ -109,7 +109,7 @@ pip install -e '.[dashboard]'
 tokenomics-dashboard
 ```
 
-The dashboard binds to `127.0.0.1` by default.
+The supplied dashboard launcher binds to `127.0.0.1:8765` and exposes a minimal read-only dashboard/API.
 
 Analyze a potentially wasteful workload:
 
@@ -117,7 +117,7 @@ Analyze a potentially wasteful workload:
 tokenomics analyze 'while true; do curl localhost/ai; sleep 5; done' --calls-per-minute 12 --record-losses
 ```
 
-After trying a recommendation, record what actually happened:
+After trying a recommendation outside Tokenomics, record what actually happened:
 
 ```bash
 tokenomics outcome LOSS_ID --actual-tokens-saved 720 --accepted
@@ -210,22 +210,22 @@ Community knowledge consists of generalized rules and deliberately contributed a
 - [x] Senior Software Engineer review
 - [x] Security check
 
-### Phase 2 · Real AI integrations
+### Phase 2 · Provider integrations
 
 - [x] Claude/Anthropic usage capture adapter
 - [x] Provider adapter interface
-- [x] Session reconstruction/aggregation
-- [x] Real cache/token metadata ingestion
-- [x] Versioned pricing profile format
+- [x] Session aggregation
+- [x] Cache/token metadata ingestion from locally supplied API responses
+- [x] Versioned caller-supplied pricing profile format
 - [x] Senior AI Engineer review
 - [x] Senior Software Engineer review
 - [x] Security check
 
-### Phase 3 · Optimization loop
+### Phase 3 · Optimization measurement loop
 
-- [x] Recommendation approval workflow
+- [x] Recommendation outcome recording
 - [x] Actual-vs-estimated savings
-- [x] Rework detection across session events
+- [x] Conservative rework detection from session metadata
 - [x] Self-overhead accounting primitive
 - [x] Senior AI Engineer review
 - [x] Senior Software Engineer review
@@ -233,7 +233,7 @@ Community knowledge consists of generalized rules and deliberately contributed a
 
 ### Phase 4 · Local dashboard
 
-- [x] Local web dashboard
+- [x] Minimal local web dashboard
 - [x] Token usage summary
 - [x] Findings endpoint
 - [x] Savings endpoint
@@ -261,12 +261,37 @@ Community knowledge consists of generalized rules and deliberately contributed a
 - [x] Deterministic recommendation tool
 - [x] Privacy boundary tests
 - [x] MCP client configuration foundation
-- [x] MCP integration test against a reference client
+- [x] MCP SDK client integration tests
 - [x] Senior AI Engineer review
 - [x] Senior Software Engineer review
 - [x] Security check
 
-**All six planned phases are implemented.** The next work is hardening, broader provider coverage, richer dashboard analytics, and production-quality packaging rather than leaving a roadmap phase partially implemented.
+**All six planned MVP phases are implemented.** This means the planned local foundation is present. It does not mean every future provider integration, dashboard capability, automatic AI integration, or production packaging feature is complete. The next work is hardening, broader provider coverage, richer dashboard analytics, and production-quality packaging.
+
+## Current implementation boundary
+
+The current release is an **MVP foundation**, not a transparent AI-client proxy.
+
+Implemented today:
+
+- Local usage recording and reporting
+- Anthropic usage extraction from a locally supplied API response
+- Deterministic waste detection and recommendations
+- Local Token Loss Ledger and measured outcomes
+- Conservative metadata-based rework detection
+- Minimal local dashboard/API
+- Versioned and validated public knowledge packs
+- Optional local stdio MCP interface
+
+Not yet implemented as transparent integrations:
+
+- Automatic interception of Claude Desktop or Claude Code traffic
+- Automatic submission of optimized prompts
+- Semantic comparison of private prompts/responses for rework detection
+- Hosted community knowledge registry
+- Broad multi-provider client instrumentation
+
+These are extension/hardening items, not hidden capabilities.
 
 ## Review gates
 
