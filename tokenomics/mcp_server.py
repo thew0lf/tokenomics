@@ -22,6 +22,14 @@ except ImportError as exc:  # pragma: no cover - exercised by optional dependenc
 from .recommendations import recommendation_for_rule
 from .storage import EventStore
 
+_MAX_RESULTS = 20
+
+
+def _validate_limit(limit: int) -> int:
+    if not 1 <= limit <= _MAX_RESULTS:
+        raise ValueError(f"limit must be between 1 and {_MAX_RESULTS}")
+    return limit
+
 
 def build_server(db_path: str | Path = ".tokenomics/tokenomics.db") -> MCPServer:
     """Build a read-only MCP server backed by the local Tokenomics store."""
@@ -34,9 +42,9 @@ def build_server(db_path: str | Path = ".tokenomics/tokenomics.db") -> MCPServer
         return {"events": store.count(), **store.totals()}
 
     @mcp.tool()
-    def tokenomics_findings(limit: int = 50) -> list[dict[str, object]]:
-        """Return recent local Token Loss Ledger observations."""
-        return store.losses(limit)
+    def tokenomics_findings(limit: int = 20) -> list[dict[str, object]]:
+        """Return up to 20 recent local Token Loss Ledger observations."""
+        return store.losses(_validate_limit(limit))
 
     @mcp.tool()
     def tokenomics_savings() -> dict[str, int]:
@@ -44,9 +52,9 @@ def build_server(db_path: str | Path = ".tokenomics/tokenomics.db") -> MCPServer
         return store.savings()
 
     @mcp.tool()
-    def tokenomics_recommendations(limit: int = 50) -> list[dict[str, object]]:
-        """Return deterministic recommendations for recent ledger findings."""
-        findings = store.losses(limit)
+    def tokenomics_recommendations(limit: int = 20) -> list[dict[str, object]]:
+        """Return up to 20 deterministic recommendations for recent findings."""
+        findings = store.losses(_validate_limit(limit))
         results: list[dict[str, object]] = []
         for finding in findings:
             action, rationale = recommendation_for_rule(str(finding["loss_type"]))
@@ -77,7 +85,7 @@ def build_server(db_path: str | Path = ".tokenomics/tokenomics.db") -> MCPServer
     @mcp.resource("tokenomics://findings")
     def findings_resource() -> str:
         """Expose recent privacy-safe Token Loss Ledger observations."""
-        return json.dumps(store.losses(), sort_keys=True)
+        return json.dumps(store.losses(_MAX_RESULTS), sort_keys=True)
 
     return mcp
 
