@@ -105,7 +105,7 @@ tokenomics analyze 'while true; do curl localhost/ai; sleep 5; done' \
   --calls-per-minute 12
 ```
 
-The analyzer returns structured findings and a recommendation. No AI service is contacted by the deterministic analyzer.
+The analyzer returns structured findings. Deterministic analysis does not contact an AI service.
 
 ## Waste detection
 
@@ -140,6 +140,8 @@ What happened on the next run?
     ↓
 How many tokens were actually saved?
 ```
+
+The local SQLite store now persists loss observations separately from usage events. Each record contains only privacy-safe metadata: category, estimate, explanation, confidence, source, and recommendation outcome.
 
 This distinction matters:
 
@@ -206,6 +208,7 @@ The rule can be shared. The conversation does not need to be.
 The first usable foundation includes:
 
 - Local SQLite usage events
+- Local Token Loss Ledger persistence
 - Input, output, cache-read, and cache-write token accounting
 - Provider-neutral cost calculation using caller-supplied pricing
 - Deterministic waste detection
@@ -240,7 +243,7 @@ See [docs/MVP.md](docs/MVP.md) for the completion criteria and deliberate non-go
 
 ### Phase 3 · Optimization loop
 
-- [ ] Token Loss Ledger persistence
+- [x] Token Loss Ledger persistence
 - [ ] Recommendation approval workflow
 - [ ] Actual-vs-estimated savings
 - [ ] Rework detection across sessions
