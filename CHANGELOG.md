@@ -2,7 +2,7 @@
 
 All notable changes to Tokenomics will be documented here.
 
-## Unreleased
+## 0.3.1 - 2026-09-16
 
 ### Changed
 

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tokenomics"
-version = "0.3.0"
+version = "0.3.1"
 description = "Local-first AI token usage observability and optimization"
 readme = "README.md"
 requires-python = ">=3.11"
