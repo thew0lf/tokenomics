@@ -4,6 +4,7 @@ import json
 import sqlite3
 from pathlib import Path
 
+from .ledger import LossEvent
 from .models import UsageEvent
 
 
@@ -23,6 +24,20 @@ CREATE TABLE IF NOT EXISTS usage_events (
 );
 CREATE INDEX IF NOT EXISTS idx_usage_events_session ON usage_events(session_id);
 CREATE INDEX IF NOT EXISTS idx_usage_events_timestamp ON usage_events(timestamp);
+
+CREATE TABLE IF NOT EXISTS loss_events (
+    id TEXT PRIMARY KEY,
+    created_at TEXT NOT NULL,
+    loss_type TEXT NOT NULL,
+    estimated_tokens INTEGER NOT NULL,
+    description TEXT NOT NULL,
+    confidence REAL NOT NULL,
+    source TEXT NOT NULL,
+    actual_tokens_saved INTEGER,
+    recommendation_accepted INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_loss_events_created_at ON loss_events(created_at);
+CREATE INDEX IF NOT EXISTS idx_loss_events_type ON loss_events(loss_type);
 """
 
 
@@ -62,9 +77,36 @@ class EventStore:
                 ),
             )
 
+    def add_loss(self, event: LossEvent) -> None:
+        """Persist a privacy-safe loss observation."""
+        with self._connect() as conn:
+            conn.execute(
+                """INSERT INTO loss_events
+                (id, created_at, loss_type, estimated_tokens, description, confidence,
+                 source, actual_tokens_saved, recommendation_accepted)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    event.id,
+                    event.created_at.isoformat(),
+                    event.loss_type.value,
+                    event.estimated_tokens,
+                    event.description,
+                    event.confidence,
+                    event.source,
+                    event.actual_tokens_saved,
+                    None
+                    if event.recommendation_accepted is None
+                    else int(event.recommendation_accepted),
+                ),
+            )
+
     def count(self) -> int:
         with self._connect() as conn:
             return int(conn.execute("SELECT COUNT(*) FROM usage_events").fetchone()[0])
+
+    def loss_count(self) -> int:
+        with self._connect() as conn:
+            return int(conn.execute("SELECT COUNT(*) FROM loss_events").fetchone()[0])
 
     def totals(self) -> dict[str, int]:
         with self._connect() as conn:
