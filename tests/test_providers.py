@@ -1,6 +1,5 @@
 from tokenomics.providers import AnthropicUsageAdapter, SessionTracker
 
-
 SESSION = "550e8400-e29b-41d4-a716-446655440000"
 
 
@@ -14,7 +13,9 @@ def test_anthropic_adapter_extracts_only_usage():
         },
         "content": [{"text": "private response that must not be stored"}],
     }
-    event = AnthropicUsageAdapter().from_response(response, model="claude-test", session_id=SESSION)
+    event = AnthropicUsageAdapter().from_response(
+        response, model="claude-test", session_id=SESSION
+    )
     assert event.total_tokens == 1250
     assert event.cache_read_tokens == 400
     assert event.cache_write_tokens == 50
@@ -34,8 +35,16 @@ def test_anthropic_adapter_requires_usage():
 def test_session_tracker_aggregates_events():
     adapter = AnthropicUsageAdapter()
     events = [
-        adapter.from_response({"usage": {"input_tokens": 100, "output_tokens": 10}}, model="m", session_id=SESSION),
-        adapter.from_response({"usage": {"input_tokens": 200, "output_tokens": 20}}, model="m", session_id=SESSION),
+        adapter.from_response(
+            {"usage": {"input_tokens": 100, "output_tokens": 10}},
+            model="m",
+            session_id=SESSION,
+        ),
+        adapter.from_response(
+            {"usage": {"input_tokens": 200, "output_tokens": 20}},
+            model="m",
+            session_id=SESSION,
+        ),
     ]
     assert SessionTracker.summarize(events) == {
         "events": 2,
