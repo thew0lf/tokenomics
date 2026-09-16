@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,7 +63,11 @@ def detect_ai_polling(text: str, calls_per_minute: float | None = None) -> list[
 def detect_context_repetition(
     repeated_tokens: int, total_input_tokens: int, threshold: float = 0.50
 ) -> list[Finding]:
-    if total_input_tokens <= 0 or repeated_tokens <= 0:
+    if repeated_tokens < 0 or total_input_tokens < 0:
+        raise ValueError("token counts must be non-negative")
+    if repeated_tokens > total_input_tokens and total_input_tokens > 0:
+        raise ValueError("repeated_tokens cannot exceed total_input_tokens")
+    if total_input_tokens == 0 or repeated_tokens == 0:
         return []
     ratio = repeated_tokens / total_input_tokens
     if ratio < threshold:

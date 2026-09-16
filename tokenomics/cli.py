@@ -4,9 +4,18 @@ import argparse
 import json
 from pathlib import Path
 
-from .detectors import detect_ai_polling, detect_hidden_errors
+from .detectors import detect_ai_polling, detect_context_repetition, detect_hidden_errors
+from .ledger import LossEvent, LossType
 from .models import UsageEvent
+from .recommendations import recommend
 from .storage import EventStore
+
+_FINDING_TO_LOSS = {
+    "hidden-errors": LossType.HIDDEN_ERROR,
+    "pipeline-status": LossType.VERIFICATION,
+    "ai-polling": LossType.POLLING,
+    "repeated-context": LossType.REPEATED_CONTEXT,
+}
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -19,7 +28,9 @@ def build_parser() -> argparse.ArgumentParser:
     init = sub.add_parser("init", help="Initialize a local Tokenomics store.")
     init.add_argument("--path", default=".tokenomics/tokenomics.db")
 
-    record = sub.add_parser("record", help="Record token usage without storing conversation content.")
+    record = sub.add_parser(
+        "record", help="Record token usage without storing conversation content."
+    )
     record.add_argument("--provider", required=True)
     record.add_argument("--model", required=True)
     record.add_argument("--input", type=int, required=True, dest="input_tokens")
@@ -32,11 +43,21 @@ def build_parser() -> argparse.ArgumentParser:
     report = sub.add_parser("report", help="Show local token totals.")
     report.add_argument("--path", default=".tokenomics/tokenomics.db")
 
-    analyze = sub.add_parser("analyze", help="Run deterministic waste detectors against supplied text.")
+    analyze = sub.add_parser(
+        "analyze", help="Run deterministic waste detectors against supplied text."
+    )
     analyze.add_argument("text")
     analyze.add_argument("--calls-per-minute", type=float)
+    analyze.add_argument("--repeated-tokens", type=int, default=0)
+    analyze.add_argument("--total-input-tokens", type=int, default=0)
+    analyze.add_argument("--record-losses", action="store_true")
+    analyze.add_argument("--path", default=".tokenomics/tokenomics.db")
 
     return parser
+
+
+def _confidence(severity: str) -> float:
+    return {"high": 0.9, "medium": 0.75, "low": 0.5}.get(severity, 0.5)
 
 
 def main() -> None:
@@ -72,18 +93,46 @@ def main() -> None:
         findings = detect_hidden_errors(args.text) + detect_ai_polling(
             args.text, args.calls_per_minute
         )
-        print(
-            json.dumps(
-                [
-                    {
-                        "rule_id": f.rule_id,
-                        "severity": f.severity,
-                        "message": f.message,
-                        "evidence": f.evidence,
-                        "estimated_avoidable_tokens": f.estimated_avoidable_tokens,
-                    }
-                    for f in findings
-                ],
-                indent=2,
-            )
-        )
+        if args.repeated_tokens or args.total_input_tokens:
+            findings += detect_context_repetition(args.repeated_tokens, args.total_input_tokens)
+
+        if args.record_losses and findings:
+            store = EventStore(args.path)
+            for finding in findings:
+                loss_type = _FINDING_TO_LOSS.get(finding.rule_id, LossType.UNKNOWN)
+                store.add_loss(
+                    LossEvent(
+                        loss_type=loss_type,
+                        estimated_tokens=finding.estimated_avoidable_tokens,
+                        description=finding.message,
+                        confidence=_confidence(finding.severity),
+                        source=finding.rule_id,
+                    )
+                )
+
+        output = {
+            "findings": [
+                {
+                    "rule_id": f.rule_id,
+                    "severity": f.severity,
+                    "message": f.message,
+                    "evidence": f.evidence,
+                    "estimated_avoidable_tokens": f.estimated_avoidable_tokens,
+                }
+                for f in findings
+            ],
+            "recommendations": [
+                {
+                    "rule_id": r.rule_id,
+                    "action": r.action,
+                    "rationale": r.rationale,
+                    "estimated_savings_tokens": r.estimated_savings_tokens,
+                }
+                for r in recommend(findings)
+            ],
+        }
+        print(json.dumps(output, indent=2))
+
+
+if __name__ == "__main__":
+    main()

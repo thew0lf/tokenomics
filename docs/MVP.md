@@ -18,6 +18,9 @@ capture → measure → detect → recommend → record outcome → measure agai
 - Detection of AI polling/repeated execution
 - Detection of repeated context when token counts are available
 - Privacy-safe findings and recommendations
+- Privacy-safe metadata enforcement at the usage-event boundary
+- Local Token Loss Ledger persistence
+- Optional local MCP server exposing aggregate usage, findings, savings, and recommendations
 - Automated unit tests
 - GitHub Actions CI across supported Python versions
 
@@ -28,9 +31,12 @@ capture → measure → detect → recommend → record outcome → measure agai
 - Cloud database or centralized telemetry
 - Provider credentials stored by Tokenomics
 - Claims that an estimated saving is an actual saving
+- Arbitrary filesystem, SQL, or conversation access through MCP
 
 ## Definition of done for the first usable release
 
-A local user should be able to install Tokenomics, initialize a local store, record usage, analyze a workload for waste, see a recommendation, and report measured usage without Tokenomics needing access to a cloud Tokenomics service.
+A local user should be able to install Tokenomics, initialize a local store, record usage, analyze a workload for waste, see a recommendation, record the observation, and report measured usage without Tokenomics needing access to a cloud Tokenomics service.
+
+The optional MCP integration must remain a thin, privacy-safe adapter over the same local domain layer. It must not expand access to private project data.
 
 Actual savings must be measured from subsequent usage. Estimates are hypotheses, not results.

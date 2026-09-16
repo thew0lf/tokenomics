@@ -40,8 +40,14 @@ class LossEvent:
     def __post_init__(self) -> None:
         if self.estimated_tokens < 0:
             raise ValueError("estimated_tokens must be non-negative")
+        if self.actual_tokens_saved is not None and self.actual_tokens_saved < 0:
+            raise ValueError("actual_tokens_saved must be non-negative")
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError("confidence must be between 0 and 1")
+        if not self.description.strip():
+            raise ValueError("description cannot be empty")
+        if not self.source.strip():
+            raise ValueError("source cannot be empty")
 
     @property
     def realized_savings(self) -> int | None:

@@ -10,11 +10,11 @@ Local-first AI token observability, waste detection, and measurable optimization
 
 [![CI](https://github.com/thew0lf/tokenomics/actions/workflows/ci.yml/badge.svg)](https://github.com/thew0lf/tokenomics/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
-![SQLite](https://img.shields.io/badge/Storage-SQLite-003B57?logo=sqlite&logoColor=white)
+![SQLite](https://img.shields.io/badge/Storage-SQLite-003B57?logo=sqlite)
 ![Privacy](https://img.shields.io/badge/Privacy-local--first-2ea44f)
 ![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)
 
-[Quick start](#quick-start) · [Architecture](#architecture) · [Waste detection](#waste-detection) · [Privacy](#privacy) · [Documentation](#documentation)
+[Quick start](#quick-start) · [Architecture](#architecture) · [MCP](#mcp) · [Privacy](#privacy) · [Documentation](#documentation)
 
 </div>
 
@@ -59,6 +59,8 @@ flowchart TB
     STORE --> REPORT[Local reports]
     REPORT --> U
 
+    MCP[MCP adapter] --> STORE
+    MCP --> LEDGER
     KNOW[Versioned public knowledge rules] -.-> DET
 ```
 
@@ -105,7 +107,45 @@ tokenomics analyze 'while true; do curl localhost/ai; sleep 5; done' \
   --calls-per-minute 12
 ```
 
-The analyzer returns structured findings. Deterministic analysis does not contact an AI service.
+Record the privacy-safe findings in the local ledger when desired:
+
+```bash
+tokenomics analyze 'while true; do curl localhost/ai; sleep 5; done' \
+  --calls-per-minute 12 \
+  --record-losses
+```
+
+## MCP
+
+Tokenomics now has an optional local MCP server for MCP-capable AI hosts.
+
+Install the optional integration:
+
+```bash
+python -m pip install -e '.[mcp]'
+```
+
+Run it over local stdio:
+
+```bash
+tokenomics-mcp
+```
+
+The MCP surface is intentionally narrow:
+
+| Tool | Purpose |
+| --- | --- |
+| `tokenomics_usage` | Aggregate local token usage |
+| `tokenomics_findings` | Recent Token Loss Ledger observations |
+| `tokenomics_savings` | Estimated versus measured savings |
+| `tokenomics_recommendations` | Deterministic recommendations |
+
+Resources:
+
+- `tokenomics://summary`
+- `tokenomics://findings`
+
+MCP does **not** expose prompts, responses, source code, files, paths, credentials, arbitrary SQL, or unrestricted filesystem access. See [docs/MCP.md](docs/MCP.md).
 
 ## Waste detection
 
@@ -141,9 +181,7 @@ What happened on the next run?
 How many tokens were actually saved?
 ```
 
-The local SQLite store now persists loss observations separately from usage events. Each record contains only privacy-safe metadata: category, estimate, explanation, confidence, source, and recommendation outcome.
-
-This distinction matters:
+The local SQLite store persists loss observations separately from usage events. Each record contains only privacy-safe metadata: category, estimate, explanation, confidence, source, and recommendation outcome.
 
 **Estimated savings ≠ actual savings.**
 
@@ -165,33 +203,11 @@ Tokenomics does not upload, share, or centralize:
 - API keys or credentials
 - Personal messages or identifying information
 
+Usage-event metadata is also allowlisted so callers cannot accidentally persist arbitrary prompt or project data through the local database model.
+
 Community knowledge is different. Public knowledge consists of generalized rules, detection patterns, optimization strategies, and privacy-safe aggregate measurements. It does not require publishing the conversation that produced the discovery.
 
-See [docs/PRIVACY.md](docs/PRIVACY.md) for the detailed model.
-
-## Shared knowledge without shared conversations
-
-```text
-                    Tokenomics Knowledge
-                           │
-              ┌────────────┼────────────┐
-              ↓            ↓            ↓
-           Local A       Local B      Local C
-           private       private      private
-           data          data         data
-```
-
-A local observation can produce a generalized rule such as:
-
-```yaml
-pattern: ai_polling
-trigger:
-  ai_calls_per_minute: ">10"
-  repeated_context_ratio: ">0.50"
-recommendation: invoke AI only when meaningful state changes
-```
-
-The rule can be shared. The conversation does not need to be.
+See [docs/PRIVACY.md](docs/PRIVACY.md) and [docs/MCP.md](docs/MCP.md).
 
 ## Design principles
 
@@ -202,10 +218,11 @@ The rule can be shared. The conversation does not need to be.
 5. **Net savings matter**: Tokenomics must account for its own analysis cost.
 6. **Don't automate judgment**: findings inform the user; they do not silently change workflows.
 7. **Vendor neutral by design**: Claude is the first target, not the permanent boundary.
+8. **MCP is an adapter, not a data backdoor**: connected AI hosts get narrow domain capabilities, not arbitrary local access.
 
 ## Current MVP
 
-The first usable foundation includes:
+The working foundation includes:
 
 - Local SQLite usage events
 - Local Token Loss Ledger persistence
@@ -217,9 +234,11 @@ The first usable foundation includes:
 - Pipeline-status detection
 - Repeated-context detection
 - Privacy-safe recommendations
+- Privacy-safe usage metadata enforcement
+- Optional local MCP server
 - Automated tests and GitHub Actions CI
 
-See [docs/MVP.md](docs/MVP.md) for the completion criteria and deliberate non-goals.
+See [docs/MVP.md](docs/MVP.md) for completion criteria and deliberate non-goals.
 
 ## Roadmap
 
@@ -232,6 +251,8 @@ See [docs/MVP.md](docs/MVP.md) for the completion criteria and deliberate non-go
 - [x] Recommendation engine
 - [x] Automated tests
 - [x] CI
+- [x] Token Loss Ledger persistence
+- [x] Privacy-safe metadata boundary
 
 ### Phase 2 · Real AI integrations
 
@@ -243,7 +264,6 @@ See [docs/MVP.md](docs/MVP.md) for the completion criteria and deliberate non-go
 
 ### Phase 3 · Optimization loop
 
-- [x] Token Loss Ledger persistence
 - [ ] Recommendation approval workflow
 - [ ] Actual-vs-estimated savings
 - [ ] Rework detection across sessions
@@ -264,6 +284,27 @@ See [docs/MVP.md](docs/MVP.md) for the completion criteria and deliberate non-go
 - [ ] Privacy-safe contribution workflow
 - [ ] Provider-specific optimization rules
 
+### Phase 6 · MCP
+
+- [x] Local stdio MCP server
+- [x] Aggregate usage tool
+- [x] Token Loss Ledger tool
+- [x] Savings tool
+- [x] Deterministic recommendation tool
+- [x] Privacy boundary tests
+- [ ] MCP client configuration examples
+- [x] MCP integration test against a reference client
+- [ ] Optional read-only context-budget resource
+
+## Review gates
+
+Every significant feature is expected to pass two engineering review lenses before merge:
+
+- **Senior AI Engineer review**: token economics, model-facing API design, privacy/data-flow boundaries, prompt/context risks, evaluation quality, and whether the feature creates more AI overhead than value.
+- **Senior Software Engineer review**: architecture, correctness, tests, failure modes, dependency hygiene, security, maintainability, and backwards compatibility.
+
+The repository should not mark a feature complete until its unit tests and review concerns are addressed.
+
 ## Repository layout
 
 ```text
@@ -273,6 +314,7 @@ tokenomics/
 │   ├── costs.py
 │   ├── detectors.py
 │   ├── ledger.py
+│   ├── mcp_server.py
 │   ├── models.py
 │   ├── recommendations.py
 │   └── storage.py
@@ -288,6 +330,7 @@ tokenomics/
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [MVP](docs/MVP.md)
+- [MCP](docs/MCP.md)
 - [Usage](docs/USAGE.md)
 - [Privacy](docs/PRIVACY.md)
 - [Updating](docs/UPDATING.md)
