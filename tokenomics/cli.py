@@ -22,15 +22,18 @@ _FINDING_TO_LOSS = {
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="tokenomics", description="Local-first AI token observability and optimization.")
+    parser = argparse.ArgumentParser(
+        prog="tokenomics",
+        description="Local-first AI token observability and optimization.",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     init = sub.add_parser("init", help="Initialize a local Tokenomics store.")
     init.add_argument("--path", default=".tokenomics/tokenomics.db")
 
     record = sub.add_parser("record", help="Record token usage without storing conversation content.")
-    for name, kwargs in [("--provider", {"required": True}), ("--model", {"required": True})]:
-        record.add_argument(name, **kwargs)
+    record.add_argument("--provider", required=True)
+    record.add_argument("--model", required=True)
     record.add_argument("--input", type=int, required=True, dest="input_tokens")
     record.add_argument("--output", type=int, required=True, dest="output_tokens")
     record.add_argument("--cache-read", type=int, default=0)
@@ -75,16 +78,38 @@ def _confidence(severity: str) -> float:
     return {"high": 0.9, "medium": 0.75, "low": 0.5}.get(severity, 0.5)
 
 
+def _finding_json(finding) -> dict[str, object]:
+    return {
+        "rule_id": finding.rule_id,
+        "severity": finding.severity,
+        "message": finding.message,
+        "evidence": finding.evidence,
+        "estimated_avoidable_tokens": finding.estimated_avoidable_tokens,
+    }
+
+
 def main() -> None:
     args = build_parser().parse_args()
+
     if args.command == "init":
         EventStore(args.path)
         print(f"Initialized Tokenomics at {Path(args.path).parent}")
         return
+
     if args.command == "record":
-        EventStore(args.path).add(UsageEvent(provider=args.provider, model=args.model, input_tokens=args.input_tokens, output_tokens=args.output_tokens, cache_read_tokens=args.cache_read, cache_write_tokens=args.cache_write, session_id=args.session))
+        event = UsageEvent(
+            provider=args.provider,
+            model=args.model,
+            input_tokens=args.input_tokens,
+            output_tokens=args.output_tokens,
+            cache_read_tokens=args.cache_read,
+            cache_write_tokens=args.cache_write,
+            session_id=args.session,
+        )
+        EventStore(args.path).add(event)
         print("Recorded usage event. Conversation content was not stored.")
         return
+
     if args.command == "capture":
         raw = sys.stdin.buffer.read(2 * 1024 * 1024 + 1)
         if len(raw) > 2 * 1024 * 1024:
@@ -94,29 +119,54 @@ def main() -> None:
         EventStore(args.path).add(event)
         print(json.dumps({"event_id": event.event_id, "tokens": event.total_tokens}, indent=2))
         return
+
     if args.command == "report":
         store = EventStore(args.path)
         print(json.dumps({"events": store.count(), **store.totals()}, indent=2))
         return
+
     if args.command == "outcome":
-        EventStore(args.path).update_loss_outcome(args.loss_id, args.actual_tokens_saved, args.accepted)
-        print(json.dumps({"loss_id": args.loss_id, "actual_tokens_saved": args.actual_tokens_saved, "recommendation_accepted": args.accepted}, indent=2))
+        store = EventStore(args.path)
+        store.update_loss_outcome(args.loss_id, args.actual_tokens_saved, args.accepted)
+        print(json.dumps({
+            "loss_id": args.loss_id,
+            "actual_tokens_saved": args.actual_tokens_saved,
+            "recommendation_accepted": args.accepted,
+        }, indent=2))
         return
+
     if args.command == "knowledge":
         data = fetch_pack(args.url, args.sha256)
         installed = install_pack(data, args.path)
         print(json.dumps({"version": installed["version"], "path": str(args.path)}, indent=2))
         return
+
     findings = detect_hidden_errors(args.text) + detect_ai_polling(args.text, args.calls_per_minute)
     if args.repeated_tokens or args.total_input_tokens:
         findings += detect_context_repetition(args.repeated_tokens, args.total_input_tokens)
+
     if args.record_losses:
         store = EventStore(args.path)
         for finding in findings:
-            store.add_loss(LossEvent(loss_type=_FINDING_TO_LOSS.get(finding.rule_id, LossType.UNKNOWN), estimated_tokens=finding.estimated_avoidable_tokens, description=finding.message, confidence=_confidence(finding.severity), source=finding.rule_id))
+            store.add_loss(LossEvent(
+                loss_type=_FINDING_TO_LOSS.get(finding.rule_id, LossType.UNKNOWN),
+                estimated_tokens=finding.estimated_avoidable_tokens,
+                description=finding.message,
+                confidence=_confidence(finding.severity),
+                source=finding.rule_id,
+            ))
+
     output = {
-        "findings": [{"rule_id": f.rule_id, "severity": f.severity, "message": f.message, "evidence": f.evidence, "estimated_avoidable_tokens": f.estimated_avoidable_tokens} for f in findings],
-        "recommendations": [{"rule_id": r.rule_id, "action": r.action, "rationale": r.rationale, "estimated_savings_tokens": r.estimated_savings_tokens} for r in recommend(findings)],
+        "findings": [_finding_json(finding) for finding in findings],
+        "recommendations": [
+            {
+                "rule_id": recommendation.rule_id,
+                "action": recommendation.action,
+                "rationale": recommendation.rationale,
+                "estimated_savings_tokens": recommendation.estimated_savings_tokens,
+            }
+            for recommendation in recommend(findings)
+        ],
     }
     print(json.dumps(output, indent=2))
 
