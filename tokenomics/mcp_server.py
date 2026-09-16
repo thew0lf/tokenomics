@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from mcp.server.mcpserver import MCPServer
+    from mcp.server import MCPServer
 except ImportError as exc:  # pragma: no cover - exercised by optional dependency installs
     raise RuntimeError(
         "The MCP extra is required. Install Tokenomics with 'pip install -e .[mcp]'."
