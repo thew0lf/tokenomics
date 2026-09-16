@@ -37,3 +37,5 @@ def test_event_store_persists_loss_event(tmp_path):
         )
     )
     assert store.loss_count() == 1
+    assert store.savings() == {"estimated_tokens": 12000, "actual_tokens_saved": 0}
+    assert store.losses()[0]["loss_type"] == "polling"
