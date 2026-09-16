@@ -2,7 +2,7 @@
 
 Tokenomics exposes an optional local Model Context Protocol (MCP) server so an MCP-capable AI host can query Tokenomics without receiving private project data.
 
-The implementation uses the current MCP Python SDK v2 line. The SDK's high-level server is `MCPServer`, with decorator-based tools and resources. citeturn0search0turn0search5
+The implementation uses the current MCP Python SDK v2 line. The SDK's high-level server is `MCPServer`, with decorator-based tools and resources.
 
 ## Install
 
