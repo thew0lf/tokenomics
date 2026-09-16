@@ -115,6 +115,16 @@ tokenomics analyze 'while true; do curl localhost/ai; sleep 5; done' \
   --record-losses
 ```
 
+After trying a recommendation, record what actually happened:
+
+```bash
+tokenomics outcome LOSS_ID \
+  --actual-tokens-saved 720 \
+  --accepted
+```
+
+This closes the measurement loop without storing the conversation that produced the finding.
+
 ## MCP
 
 Tokenomics now has an optional local MCP server for MCP-capable AI hosts.
@@ -185,7 +195,7 @@ The local SQLite store persists loss observations separately from usage events. 
 
 **Estimated savings ≠ actual savings.**
 
-Tokenomics is designed to learn from the difference.
+Tokenomics now supports recording the measured result of a recommendation so the ledger can distinguish predicted savings from realized savings.
 
 ## Privacy
 
@@ -235,6 +245,7 @@ The working foundation includes:
 - Repeated-context detection
 - Privacy-safe recommendations
 - Privacy-safe usage metadata enforcement
+- Measured recommendation outcomes
 - Optional local MCP server
 - Automated tests and GitHub Actions CI
 
@@ -265,7 +276,7 @@ See [docs/MVP.md](docs/MVP.md) for completion criteria and deliberate non-goals.
 ### Phase 3 · Optimization loop
 
 - [ ] Recommendation approval workflow
-- [ ] Actual-vs-estimated savings
+- [x] Actual-vs-estimated savings
 - [ ] Rework detection across sessions
 - [ ] Self-overhead accounting
 

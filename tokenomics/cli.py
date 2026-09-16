@@ -53,6 +53,14 @@ def build_parser() -> argparse.ArgumentParser:
     analyze.add_argument("--record-losses", action="store_true")
     analyze.add_argument("--path", default=".tokenomics/tokenomics.db")
 
+    outcome = sub.add_parser("outcome", help="Record the measured result of a loss recommendation.")
+    outcome.add_argument("loss_id")
+    outcome.add_argument("--actual-tokens-saved", type=int, required=True)
+    acceptance = outcome.add_mutually_exclusive_group(required=True)
+    acceptance.add_argument("--accepted", action="store_true")
+    acceptance.add_argument("--rejected", action="store_true")
+    outcome.add_argument("--path", default=".tokenomics/tokenomics.db")
+
     return parser
 
 
@@ -87,6 +95,21 @@ def main() -> None:
     if args.command == "report":
         store = EventStore(args.path)
         print(json.dumps({"events": store.count(), **store.totals()}, indent=2))
+        return
+
+    if args.command == "outcome":
+        store = EventStore(args.path)
+        store.update_loss_outcome(args.loss_id, args.actual_tokens_saved, args.accepted)
+        print(
+            json.dumps(
+                {
+                    "loss_id": args.loss_id,
+                    "actual_tokens_saved": args.actual_tokens_saved,
+                    "recommendation_accepted": args.accepted,
+                },
+                indent=2,
+            )
+        )
         return
 
     if args.command == "analyze":
