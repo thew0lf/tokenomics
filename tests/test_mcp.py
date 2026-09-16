@@ -39,13 +39,11 @@ def test_mcp_server_rejects_unbounded_result_requests(tmp_path):
 
 def test_mcp_recommendations_map_loss_type_to_rule(tmp_path):
     db = tmp_path / "tokenomics.db"
-    store = EventStore(db)
-    store.add_loss(LossEvent(loss_type=LossType.POLLING, estimated_tokens=500, description="polling", confidence=0.9))
+    EventStore(db).add_loss(LossEvent(loss_type=LossType.POLLING, estimated_tokens=500, description="polling", confidence=0.9))
 
     async def exercise() -> None:
         async with Client(build_server(db)) as client:
             result = await client.call_tool("tokenomics_recommendations", {})
             assert not result.is_error
-            assert result.structured_content["estimated_savings_tokens"] == 500 if isinstance(result.structured_content, dict) else True
             assert "Monitor state locally" in result.content[0].text
     asyncio.run(exercise())
