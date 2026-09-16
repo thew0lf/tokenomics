@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "ai-polling",
+      "pattern": "ai_polling",
+      "severity": "high"
+    },
+    {
+      "id": "hidden-errors",
+      "pattern": "hidden_errors",
+      "severity": "high"
+    },
+    {
+      "id": "repeated-context",
+      "pattern": "repeated_context",
+      "severity": "medium"
+    }
+  ]
+}
