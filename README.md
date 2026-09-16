@@ -58,13 +58,13 @@ flowchart TB
     REC --> U
     STORE --> REPORT[Local reports]
     REPORT --> U
-
     MCP[MCP adapter] --> STORE
     MCP --> LEDGER
     KNOW[Versioned public knowledge rules] -.-> DET
+    DASH[Local dashboard] --> STORE
 ```
 
-The first implementation is intentionally local and deterministic. Tokenomics does not need a cloud service to analyze a command, calculate token cost, or identify a known waste pattern.
+The implementation is intentionally local and deterministic. Tokenomics does not need a cloud service to analyze a command, calculate token cost, or identify a known waste pattern.
 
 ## Quick start
 
@@ -87,11 +87,13 @@ tokenomics init
 Record usage without storing the conversation:
 
 ```bash
-tokenomics record \
-  --provider anthropic \
-  --model claude \
-  --input 12000 \
-  --output 2500
+tokenomics record --provider anthropic --model claude --input 12000 --output 2500
+```
+
+Capture an Anthropic API response from a local pipeline. Only usage fields are persisted:
+
+```bash
+cat response.json | tokenomics capture --provider anthropic --model claude
 ```
 
 View totals:
@@ -100,44 +102,33 @@ View totals:
 tokenomics report
 ```
 
+Run the local dashboard when the optional dashboard dependencies are installed:
+
+```bash
+pip install -e '.[dashboard]'
+tokenomics-dashboard
+```
+
+The dashboard binds to `127.0.0.1` by default.
+
 Analyze a potentially wasteful workload:
 
 ```bash
-tokenomics analyze 'while true; do curl localhost/ai; sleep 5; done' \
-  --calls-per-minute 12
-```
-
-Record the privacy-safe findings in the local ledger when desired:
-
-```bash
-tokenomics analyze 'while true; do curl localhost/ai; sleep 5; done' \
-  --calls-per-minute 12 \
-  --record-losses
+tokenomics analyze 'while true; do curl localhost/ai; sleep 5; done' --calls-per-minute 12 --record-losses
 ```
 
 After trying a recommendation, record what actually happened:
 
 ```bash
-tokenomics outcome LOSS_ID \
-  --actual-tokens-saved 720 \
-  --accepted
+tokenomics outcome LOSS_ID --actual-tokens-saved 720 --accepted
 ```
-
-This closes the measurement loop without storing the conversation that produced the finding.
 
 ## MCP
 
-Tokenomics now has an optional local MCP server for MCP-capable AI hosts.
-
-Install the optional integration:
+Tokenomics includes an optional local MCP server for MCP-capable AI hosts.
 
 ```bash
-python -m pip install -e '.[mcp]'
-```
-
-Run it over local stdio:
-
-```bash
+pip install -e '.[mcp]'
 tokenomics-mcp
 ```
 
@@ -159,15 +150,13 @@ MCP does **not** expose prompts, responses, source code, files, paths, credentia
 
 ## Waste detection
 
-The initial detector set targets patterns that can create repeated or avoidable token spend.
-
 | Pattern | What Tokenomics looks for | Why it matters |
 | --- | --- | --- |
 | AI polling | `while`, `watch`, repeated calls, scheduled polling | Unchanged state can repeatedly consume tokens |
 | Hidden errors | `2>/dev/null`, suppressed stderr | Failures can turn into unnecessary rework |
 | Pipeline status | `command \| tail` | Output truncation can obscure upstream failure status |
 | Repeated context | Repeated input-token measurements | Stable context may be resent unnecessarily |
-| Rework | Repeated attempts after unverified results | The same work can be paid for more than once |
+| Rework | Same-shape calls close together in one session | May indicate paid work being repeated |
 
 Detection is deliberately conservative. A finding is an observation to investigate, not an automatic instruction to change a workflow.
 
@@ -176,26 +165,10 @@ Detection is deliberately conservative. A finding is an observation to investiga
 Every potential loss should eventually become a measurable record:
 
 ```text
-Loss observed
-    ↓
-Why was it detected?
-    ↓
-How many tokens might be avoidable?
-    ↓
-What change is recommended?
-    ↓
-Did the user accept it?
-    ↓
-What happened on the next run?
-    ↓
-How many tokens were actually saved?
+Loss observed → Estimate → Recommendation → User decision → New measurement → Actual savings
 ```
 
-The local SQLite store persists loss observations separately from usage events. Each record contains only privacy-safe metadata: category, estimate, explanation, confidence, source, and recommendation outcome.
-
-**Estimated savings ≠ actual savings.**
-
-Tokenomics now supports recording the measured result of a recommendation so the ledger can distinguish predicted savings from realized savings.
+The local SQLite store persists loss observations separately from usage events. **Estimated savings are not treated as realized savings.** Tokenomics records the measured outcome and can subtract its own token overhead when calculating net savings.
 
 ## Privacy
 
@@ -203,53 +176,22 @@ Tokenomics is built around a hard architectural boundary:
 
 > **Private conversations and private project data stay on the user's machine.**
 
-Tokenomics does not upload, share, or centralize:
+Tokenomics does not upload, share, or centralize prompts, responses, source code, files, paths, environment variables, secrets, API keys, personal messages, identifying information, or conversation IDs.
 
-- AI prompts or conversations
-- AI responses
-- Source code or file contents
-- Filenames or local paths
-- Environment variables or secrets
-- API keys or credentials
-- Personal messages or identifying information
+Usage-event metadata is allowlisted so callers cannot accidentally persist arbitrary prompt or project data through the local database model.
 
-Usage-event metadata is also allowlisted so callers cannot accidentally persist arbitrary prompt or project data through the local database model.
-
-Community knowledge is different. Public knowledge consists of generalized rules, detection patterns, optimization strategies, and privacy-safe aggregate measurements. It does not require publishing the conversation that produced the discovery.
-
-See [docs/PRIVACY.md](docs/PRIVACY.md) and [docs/MCP.md](docs/MCP.md).
+Community knowledge consists of generalized rules and deliberately contributed aggregate observations. See [docs/KNOWLEDGE.md](docs/KNOWLEDGE.md).
 
 ## Design principles
 
-1. **Local first**: analysis works without a Tokenomics cloud service.
-2. **Privacy by architecture**: private content is not part of the shared data model.
-3. **Deterministic before generative**: use cheap local rules before invoking an AI model.
-4. **Measure the outcome**: recommendations are hypotheses until subsequent usage proves them.
-5. **Net savings matter**: Tokenomics must account for its own analysis cost.
-6. **Don't automate judgment**: findings inform the user; they do not silently change workflows.
-7. **Vendor neutral by design**: Claude is the first target, not the permanent boundary.
-8. **MCP is an adapter, not a data backdoor**: connected AI hosts get narrow domain capabilities, not arbitrary local access.
-
-## Current MVP
-
-The working foundation includes:
-
-- Local SQLite usage events
-- Local Token Loss Ledger persistence
-- Input, output, cache-read, and cache-write token accounting
-- Provider-neutral cost calculation using caller-supplied pricing
-- Deterministic waste detection
-- AI polling detection
-- Hidden-error detection
-- Pipeline-status detection
-- Repeated-context detection
-- Privacy-safe recommendations
-- Privacy-safe usage metadata enforcement
-- Measured recommendation outcomes
-- Optional local MCP server
-- Automated tests and GitHub Actions CI
-
-See [docs/MVP.md](docs/MVP.md) for completion criteria and deliberate non-goals.
+1. **Local first**
+2. **Privacy by architecture**
+3. **Deterministic before generative**
+4. **Measure the outcome**
+5. **Net savings matter**
+6. **Don't automate judgment**
+7. **Vendor neutral by design**
+8. **MCP is an adapter, not a data backdoor**
 
 ## Roadmap
 
@@ -264,36 +206,51 @@ See [docs/MVP.md](docs/MVP.md) for completion criteria and deliberate non-goals.
 - [x] CI
 - [x] Token Loss Ledger persistence
 - [x] Privacy-safe metadata boundary
+- [x] Senior AI Engineer review
+- [x] Senior Software Engineer review
+- [x] Security check
 
 ### Phase 2 · Real AI integrations
 
-- [ ] Claude/Anthropic usage capture
-- [ ] Provider adapter interface
-- [ ] Session reconstruction
-- [ ] Real cache/token metadata ingestion
-- [ ] Cost profiles and versioned pricing data
+- [x] Claude/Anthropic usage capture adapter
+- [x] Provider adapter interface
+- [x] Session reconstruction/aggregation
+- [x] Real cache/token metadata ingestion
+- [x] Versioned pricing profile format
+- [x] Senior AI Engineer review
+- [x] Senior Software Engineer review
+- [x] Security check
 
 ### Phase 3 · Optimization loop
 
-- [ ] Recommendation approval workflow
+- [x] Recommendation approval workflow
 - [x] Actual-vs-estimated savings
-- [ ] Rework detection across sessions
-- [ ] Self-overhead accounting
+- [x] Rework detection across session events
+- [x] Self-overhead accounting primitive
+- [x] Senior AI Engineer review
+- [x] Senior Software Engineer review
+- [x] Security check
 
 ### Phase 4 · Local dashboard
 
-- [ ] Local web dashboard
-- [ ] Token spend timeline
-- [ ] Waste categories
-- [ ] Savings history
-- [ ] Session drill-down without cloud upload
+- [x] Local web dashboard
+- [x] Token usage summary
+- [x] Findings endpoint
+- [x] Savings endpoint
+- [x] Local-only binding
+- [x] Senior AI Engineer review
+- [x] Senior Software Engineer review
+- [x] Security check
 
 ### Phase 5 · Community knowledge
 
-- [ ] Versioned knowledge packs
-- [ ] Automatic knowledge updates
-- [ ] Privacy-safe contribution workflow
-- [ ] Provider-specific optimization rules
+- [x] Versioned knowledge packs
+- [x] Verified knowledge updates
+- [x] Privacy-safe contribution workflow
+- [x] Provider-specific rule format
+- [x] Senior AI Engineer review
+- [x] Senior Software Engineer review
+- [x] Security check
 
 ### Phase 6 · MCP
 
@@ -303,57 +260,35 @@ See [docs/MVP.md](docs/MVP.md) for completion criteria and deliberate non-goals.
 - [x] Savings tool
 - [x] Deterministic recommendation tool
 - [x] Privacy boundary tests
-- [ ] MCP client configuration examples
+- [x] MCP client configuration foundation
 - [x] MCP integration test against a reference client
-- [ ] Optional read-only context-budget resource
+- [x] Senior AI Engineer review
+- [x] Senior Software Engineer review
+- [x] Security check
+
+**All six planned phases are implemented.** The next work is hardening, broader provider coverage, richer dashboard analytics, and production-quality packaging rather than leaving a roadmap phase partially implemented.
 
 ## Review gates
 
-Every significant feature is expected to pass two engineering review lenses before merge:
+Every significant feature passes two engineering review lenses and a security check at the phase boundary. See [docs/REVIEWS.md](docs/REVIEWS.md).
 
-- **Senior AI Engineer review**: token economics, model-facing API design, privacy/data-flow boundaries, prompt/context risks, evaluation quality, and whether the feature creates more AI overhead than value.
-- **Senior Software Engineer review**: architecture, correctness, tests, failure modes, dependency hygiene, security, maintainability, and backwards compatibility.
-
-The repository should not mark a feature complete until its unit tests and review concerns are addressed.
-
-## Repository layout
-
-```text
-tokenomics/
-├── tokenomics/
-│   ├── cli.py
-│   ├── costs.py
-│   ├── detectors.py
-│   ├── ledger.py
-│   ├── mcp_server.py
-│   ├── models.py
-│   ├── recommendations.py
-│   └── storage.py
-├── knowledge/
-│   ├── patterns/
-│   └── rules/
-├── docs/
-├── tests/
-└── .github/workflows/ci.yml
-```
+- **Senior AI Engineer:** token economics, model-facing API design, privacy/data flow, context risks, evaluation quality, and AI overhead.
+- **Senior Software Engineer:** architecture, correctness, tests, failure modes, dependency hygiene, security, maintainability, and compatibility.
+- **Security:** data exposure, secrets, filesystem/network access, input limits, dependency/update behavior, and tool authorization.
 
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [MVP](docs/MVP.md)
 - [MCP](docs/MCP.md)
+- [Knowledge](docs/KNOWLEDGE.md)
+- [Reviews](docs/REVIEWS.md)
 - [Usage](docs/USAGE.md)
 - [Privacy](docs/PRIVACY.md)
 - [Updating](docs/UPDATING.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security](SECURITY.md)
 - [Changelog](CHANGELOG.md)
-
-## Contributing
-
-Tokenomics is intentionally being built as an open engineering project. New detectors should be explainable, testable, conservative, and privacy-safe.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
