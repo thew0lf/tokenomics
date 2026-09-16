@@ -1,0 +1,12 @@
+id: ai-polling
+version: 1
+pattern: ai_polling
+trigger:
+  ai_calls_per_minute: ">10"
+  repeated_context_ratio: ">0.50"
+problem: AI is being invoked repeatedly while monitoring a process.
+recommendation: Perform monitoring locally and invoke AI only when meaningful state changes.
+measurement:
+  estimated_savings_formula: repeated_tokens * avoidable_ratio
+privacy:
+  requires_raw_conversation: false
