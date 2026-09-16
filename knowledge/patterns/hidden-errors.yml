@@ -1,0 +1,10 @@
+id: hidden-errors
+version: 1
+pattern: hidden_errors
+signals:
+  - command redirects stderr to /dev/null
+  - command output is piped through a summarizer without preserving failure status
+problem: Errors can be suppressed or obscured, causing AI-assisted rework.
+recommendation: Keep errors visible and preserve the true command exit status before asking AI to diagnose or summarize a result.
+privacy:
+  requires_raw_conversation: false
