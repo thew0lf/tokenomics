@@ -10,7 +10,6 @@ from .models import UsageEvent
 from .recommendations import recommend
 from .storage import EventStore
 
-
 _FINDING_TO_LOSS = {
     "hidden-errors": LossType.HIDDEN_ERROR,
     "pipeline-status": LossType.VERIFICATION,
