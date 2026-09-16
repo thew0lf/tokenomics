@@ -2,15 +2,33 @@
 
 All notable changes to Tokenomics will be documented here.
 
-## Unreleased
+## 0.3.0
 
 ### Added
 
-- Local usage event model and SQLite storage
-- Provider-neutral token cost calculations
-- Deterministic waste-pattern detection
+- Anthropic usage adapter and privacy-safe API capture
+- Session usage aggregation and conservative rework detection
+- Measured optimization outcomes and net-savings calculation
+- Local read-only dashboard on loopback
+- Versioned knowledge-pack loading and integrity-checked updates
+- Privacy-safe community knowledge workflow
+- MCP client configuration example
+- Phase-by-phase engineering and security review record
+
+### Security
+
+- Provider capture never persists response content
+- API capture is size-limited
+- Knowledge updates require HTTPS, approved GitHub hosts, SHA-256 verification, schema validation, and size limits
+- Dashboard launcher binds to `127.0.0.1`
+- MCP exposes only bounded, privacy-safe domain data
+
+## 0.2.0
+
+### Added
+
 - Persistent Token Loss Ledger
-- Deterministic recommendation engine
+- Deterministic recommendations
 - Optional local MCP server over stdio
 - MCP tools for aggregate usage, findings, savings, and recommendations
 - MCP resources for local summary and findings
@@ -18,21 +36,16 @@ All notable changes to Tokenomics will be documented here.
 
 ### Changed
 
-- Usage-event metadata is now allowlisted to prevent accidental persistence of private content
+- Usage-event metadata is allowlisted to prevent accidental persistence of private content
 - CLI analysis can record privacy-safe findings in the local Token Loss Ledger
 - MCP result sizes are bounded to control model-context overhead
-- README roadmap and MVP documentation now track the completed foundation and remaining MCP work
 
-### Planned
+## 0.1.0
 
-- Claude/Anthropic usage capture
-- Provider adapter interface
-- Session reconstruction
-- Real cache/token metadata ingestion
-- Versioned cost profiles and pricing data
-- Recommendation approval and actual-vs-estimated savings tracking
-- Rework detection across sessions
-- Tokenomics self-overhead accounting
-- Local dashboard
-- Versioned Tokenomics Knowledge Registry
-- MCP client configuration examples and reference-client integration tests
+### Added
+
+- Local usage event model and SQLite storage
+- Provider-neutral token cost calculations
+- Deterministic waste-pattern detection
+- Initial recommendation engine
+- Initial test suite and GitHub Actions CI
