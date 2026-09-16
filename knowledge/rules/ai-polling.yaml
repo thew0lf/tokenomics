@@ -1,0 +1,13 @@
+id: ai-polling
+version: 1
+introduced: 2026-09-15
+detects:
+  - polling
+  - watch
+  - retry-loop
+  - repeated-ai-call
+signals:
+  ai_calls_per_minute: ">10"
+problem: AI is being invoked repeatedly while monitoring or waiting for state to change.
+recommendation: Perform monitoring locally and invoke AI only when meaningful state changes.
+privacy: This rule does not require conversation contents to leave the local machine.
