@@ -293,7 +293,7 @@ See [docs/MVP.md](docs/MVP.md) for completion criteria and deliberate non-goals.
 - [x] Deterministic recommendation tool
 - [x] Privacy boundary tests
 - [ ] MCP client configuration examples
-- [ ] MCP integration test against a reference client
+- [x] MCP integration test against a reference client
 - [ ] Optional read-only context-budget resource
 
 ## Review gates
