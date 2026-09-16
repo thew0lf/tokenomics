@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "prices": {
+    "anthropic": {
+      "source": "caller-supplied",
+      "models": {}
+    }
+  }
+}
