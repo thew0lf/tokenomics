@@ -34,6 +34,7 @@ The server uses stdio transport, keeping the first integration local to the mach
 | `tokenomics_findings` | Recent Token Loss Ledger observations |
 | `tokenomics_savings` | Estimated versus measured savings |
 | `tokenomics_recommendations` | Deterministic recommendations from local findings |
+| `tokenomics_plan_savings` | Cost-aware executor and review-gate recommendation from caller-supplied profiles; supports a minimum-savings threshold |
 
 ## Exposed resources
 
@@ -54,6 +55,11 @@ The MCP adapter deliberately does not expose:
 MCP is an adapter over the Tokenomics domain layer. It does not become the domain layer and it does not grant the connected AI host arbitrary access to the local database.
 
 The usage model is intentionally read-oriented. Recommendations are deterministic and derived from the local Token Loss Ledger rather than asking an external AI service to inspect private data.
+
+`tokenomics_plan_savings` is also recommendation-only. It accepts a model-profile
+JSON document containing prices and declared capabilities, plus aggregate token
+estimates. It does not receive prompts, source code, or responses, and it does
+not select or launch a model.
 
 ## Review requirements
 

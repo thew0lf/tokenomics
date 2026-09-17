@@ -66,3 +66,50 @@ def test_outcome_reports_expected_errors_without_traceback(tmp_path, monkeypatch
         main()
     assert exc.value.code == 2
     assert "loss event not found" in capsys.readouterr().err
+
+
+def test_plan_savings_emits_a_recommendation(tmp_path, monkeypatch, capsys):
+    profiles = {
+        "models": [
+            {
+                "name": "planner",
+                "provider": "test",
+                "input_per_million": 15,
+                "output_per_million": 75,
+                "capabilities": ["implementation"],
+                "max_complexity": "high",
+            },
+            {
+                "name": "executor",
+                "provider": "test",
+                "input_per_million": 3,
+                "output_per_million": 15,
+                "capabilities": ["implementation"],
+                "max_complexity": "medium",
+            },
+        ]
+    }
+    profile_path = tmp_path / "profiles.json"
+    profile_path.write_text(json.dumps(profiles), encoding="utf-8")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "tokenomics",
+            "plan-savings",
+            "--profiles",
+            str(profile_path),
+            "--planner",
+            "planner",
+            "--task-class",
+            "implementation",
+            "--complexity",
+            "medium",
+            "--input",
+            "12000",
+            "--output",
+            "2000",
+        ],
+    )
+    main()
+    assert json.loads(capsys.readouterr().out)["recommended_executor"] == "executor"

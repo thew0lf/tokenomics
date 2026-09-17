@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from mcp import Client
 
@@ -18,11 +19,55 @@ def test_mcp_server_exposes_only_safe_domain_surface(tmp_path):
                 "tokenomics_findings",
                 "tokenomics_savings",
                 "tokenomics_recommendations",
+                "tokenomics_plan_savings",
             }
             assert {str(resource.uri) for resource in resources.resources} == {
                 "tokenomics://summary",
                 "tokenomics://findings",
             }
+
+    asyncio.run(exercise())
+
+
+def test_mcp_planning_recommends_without_dispatching(tmp_path):
+    profiles = {
+        "models": [
+            {
+                "name": "planner",
+                "provider": "example",
+                "input_per_million": 20,
+                "output_per_million": 60,
+                "capabilities": ["implementation"],
+                "max_complexity": "high",
+            },
+            {
+                "name": "executor",
+                "provider": "example",
+                "input_per_million": 2,
+                "output_per_million": 8,
+                "capabilities": ["implementation"],
+                "max_complexity": "medium",
+            },
+        ]
+    }
+
+    async def exercise() -> None:
+        async with Client(build_server(tmp_path / "tokenomics.db")) as client:
+            result = await client.call_tool(
+                "tokenomics_plan_savings",
+                {
+                    "profiles_json": json.dumps(profiles),
+                    "planner": "planner",
+                    "task_class": "implementation",
+                    "complexity": "medium",
+                    "input_tokens": 10_000,
+                    "output_tokens": 2_000,
+                    "handoff_overhead_tokens": 1_000,
+                },
+            )
+            assert not result.is_error
+            assert result.structured_content["recommended_executor"] == "executor"
+            assert "not an automatic handoff" in result.structured_content["rationale"]
 
     asyncio.run(exercise())
 

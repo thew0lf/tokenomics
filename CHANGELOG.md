@@ -2,6 +2,16 @@
 
 All notable changes to Tokenomics will be documented here.
 
+## Unreleased
+
+### Added
+
+- Provider-neutral, recommendation-only cost-aware planning with caller-supplied
+  model profiles, capability/complexity checks, handoff-overhead accounting,
+  optional minimum-savings alerts, and risk-based review gates.
+- `tokenomics plan-savings` and the privacy-safe
+  `tokenomics_plan_savings` MCP tool.
+
 ## 0.3.1 - 2026-09-16
 
 ### Changed

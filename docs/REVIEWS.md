@@ -135,3 +135,51 @@ security certification or a guarantee that future integrations are secure.
 **PASS.** The defined MVP production-hardening baseline and its required review
 lenses are complete. Remaining work is feature expansion and any additional
 production requirements a future deployment model introduces.
+
+## Cost-aware planning recommendations: 2026-09-17
+
+This feature is decision support for a host's planning step. It recommends a
+declared-capable lower-cost executor only when the caller-supplied estimate
+remains lower after handoff overhead; it never dispatches, switches, or stops
+model work.
+
+### Senior AI Engineer review: **PASS**
+
+- Pricing, capabilities, complexity ceilings, and token estimates are explicit
+  caller-supplied inputs rather than claims inferred from a model or provider.
+- The policy counts handoff input overhead and supports a caller-selected
+  minimum-savings threshold, preventing a misleading recommendation based on
+  a tiny nominal saving.
+- The output makes its recommendation-only status and required review lenses
+  explicit. No prompt, response, source-code, or private-context input exists.
+
+### Senior Software Engineer review: **PASS**
+
+- The policy is provider-neutral and isolated from storage and dispatch code.
+- Profile parsing validates required fields, finite non-negative prices,
+  capability declarations, complexity, and token counts.
+- The CLI and MCP adapters use the same domain function; unit coverage includes
+  a cheaper capable candidate, an incapable candidate, review gates, invalid
+  profiles, and CLI output.
+
+### Security specialist review: **PASS**
+
+- The MCP tool accepts only caller-supplied profile JSON and aggregate numeric
+  estimates. It has no filesystem, database, provider, subprocess, or model
+  dispatch capability.
+- The output contains price estimates and review labels only. Existing MCP
+  restrictions against raw content, arbitrary SQL, credentials, and paths are
+  unchanged.
+
+### Architecture and DevOps review: **NOT REQUIRED**
+
+- This is an additive local policy module with no service topology, deployment,
+  schema, dependency, CI, or release-process change. Those review lenses are
+  required when a future host adapter performs dispatch or introduces a new
+  deployment boundary.
+
+### Technical writer review: **PASS**
+
+- The README, CLI/MCP reference, profile example, and dedicated planning guide
+  consistently describe the feature as recommendation-only and distinguish
+  illustrative prices from approved production pricing.

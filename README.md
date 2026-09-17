@@ -140,6 +140,7 @@ The MCP surface is intentionally narrow:
 | `tokenomics_findings` | Recent Token Loss Ledger observations |
 | `tokenomics_savings` | Estimated versus measured savings |
 | `tokenomics_recommendations` | Deterministic recommendations |
+| `tokenomics_plan_savings` | Cost-aware executor and review-gate recommendation |
 
 Resources:
 
@@ -169,6 +170,16 @@ Loss observed → Estimate → Recommendation → User decision → New measurem
 ```
 
 The local SQLite store persists loss observations separately from usage events. **Estimated savings are not treated as realized savings.** Tokenomics records the measured outcome and can subtract its own token overhead when calculating net savings.
+
+## Cost-aware planning
+
+Before implementation, Tokenomics can recommend a lower-cost model when a
+caller-supplied profile declares it capable of the task and the expected savings
+remain positive after handoff-context overhead. The recommendation includes
+risk-based review gates; it never switches models or dispatches work.
+
+See [cost-aware planning](docs/PLANNING.md) for the local CLI and host-integration
+workflow.
 
 ## Privacy
 
@@ -315,6 +326,7 @@ Every significant feature passes two engineering review lenses and a security ch
 - [Architecture](docs/ARCHITECTURE.md)
 - [MVP](docs/MVP.md)
 - [MCP](docs/MCP.md)
+- [Cost-aware planning](docs/PLANNING.md)
 - [Knowledge](docs/KNOWLEDGE.md)
 - [Reviews](docs/REVIEWS.md)
 - [Usage](docs/USAGE.md)

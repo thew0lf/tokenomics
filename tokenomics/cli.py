@@ -9,6 +9,7 @@ from .detectors import detect_ai_polling, detect_context_repetition, detect_hidd
 from .knowledge import fetch_pack, install_pack
 from .ledger import LossEvent, LossType
 from .models import UsageEvent
+from .planning import profiles_from_data, recommend_handoff
 from .providers import AnthropicUsageAdapter
 from .recommendations import recommend
 from .storage import EventStore
@@ -64,6 +65,25 @@ def build_parser() -> argparse.ArgumentParser:
     acceptance.add_argument("--accepted", action="store_true")
     acceptance.add_argument("--rejected", action="store_true")
     outcome.add_argument("--path", default=".tokenomics/tokenomics.db")
+
+    plan_savings = sub.add_parser(
+        "plan-savings", help="Recommend a lower-cost declared-capable executor without dispatching work."
+    )
+    plan_savings.add_argument("--profiles", required=True, help="Path to caller-supplied model profile JSON.")
+    plan_savings.add_argument("--planner", required=True, help="Name of the planning model in the profile file.")
+    plan_savings.add_argument(
+        "--task-class", required=True, help="Declared task class, such as implementation or docs."
+    )
+    plan_savings.add_argument("--complexity", choices=["low", "medium", "high"], required=True)
+    plan_savings.add_argument("--input", type=int, required=True, dest="input_tokens")
+    plan_savings.add_argument("--output", type=int, required=True, dest="output_tokens")
+    plan_savings.add_argument("--handoff-overhead", type=int, default=0)
+    plan_savings.add_argument(
+        "--minimum-net-savings",
+        type=float,
+        default=0.0,
+        help="Only recommend a handoff when estimated savings meet this currency threshold.",
+    )
 
     knowledge = sub.add_parser("knowledge", help="Manage the local public knowledge pack.")
     knowledge_sub = knowledge.add_subparsers(dest="knowledge_command", required=True)
@@ -146,6 +166,25 @@ def _main() -> None:
         print(json.dumps({"version": installed["version"], "path": str(args.path)}, indent=2))
         return
 
+    if args.command == "plan-savings":
+        profile_data = json.loads(Path(args.profiles).read_text(encoding="utf-8"))
+        profiles = profiles_from_data(profile_data)
+        planner = next((profile for profile in profiles if profile.name == args.planner), None)
+        if planner is None:
+            raise ValueError(f"planning model not found in profile file: {args.planner}")
+        recommendation = recommend_handoff(
+            planner=planner,
+            candidates=profiles,
+            task_class=args.task_class,
+            complexity=args.complexity,
+            input_tokens=args.input_tokens,
+            output_tokens=args.output_tokens,
+            handoff_overhead_tokens=args.handoff_overhead,
+            minimum_net_savings=args.minimum_net_savings,
+        )
+        print(json.dumps(recommendation.as_dict(), indent=2))
+        return
+
     findings = detect_hidden_errors(args.text) + detect_ai_polling(args.text, args.calls_per_minute)
     if args.repeated_tokens or args.total_input_tokens:
         findings += detect_context_repetition(args.repeated_tokens, args.total_input_tokens)
@@ -182,7 +221,7 @@ def main() -> None:
     """Run the CLI without exposing implementation tracebacks for expected input errors."""
     try:
         _main()
-    except (json.JSONDecodeError, KeyError, RuntimeError, UnicodeDecodeError, ValueError) as exc:
+    except (json.JSONDecodeError, KeyError, OSError, RuntimeError, TypeError, UnicodeDecodeError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         raise SystemExit(2) from None
 

@@ -17,6 +17,7 @@ try:
 except ImportError as exc:  # pragma: no cover
     raise RuntimeError("Install Tokenomics with 'pip install -e .[mcp]'.") from exc
 
+from .planning import profiles_from_data, recommend_handoff
 from .recommendations import recommendation_for_rule
 from .storage import EventStore
 
@@ -73,6 +74,38 @@ def build_server(db_path: str | Path = ".tokenomics/tokenomics.db") -> MCPServer
                 }
             )
         return results
+
+    @mcp.tool()
+    def tokenomics_plan_savings(
+        profiles_json: str,
+        planner: str,
+        task_class: str,
+        complexity: str,
+        input_tokens: int,
+        output_tokens: int,
+        handoff_overhead_tokens: int = 0,
+        minimum_net_savings: float = 0.0,
+    ) -> dict[str, object]:
+        """Recommend a lower-cost capable executor and risk-based review gates.
+
+        The caller supplies only model pricing and capability profiles; this
+        tool neither switches models nor receives prompt, source, or response
+        content.
+        """
+        profiles = profiles_from_data(json.loads(profiles_json))
+        planning_model = next((profile for profile in profiles if profile.name == planner), None)
+        if planning_model is None:
+            raise ValueError(f"planning model not found in profile data: {planner}")
+        return recommend_handoff(
+            planner=planning_model,
+            candidates=profiles,
+            task_class=task_class,
+            complexity=complexity,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            handoff_overhead_tokens=handoff_overhead_tokens,
+            minimum_net_savings=minimum_net_savings,
+        ).as_dict()
 
     @mcp.resource("tokenomics://summary")
     def summary() -> str:
