@@ -1,0 +1,13 @@
+id: truncated-result
+version: 1
+pattern: truncated_result
+category: verification
+severity: high
+signals:
+  - "a listing returns exactly a page size or limit"
+  - "output is cut by head, tail or a size limit before analysis"
+problem: "A truncated result raises no error and looks complete."
+recommendation: "Compare what was received with what should exist (row count, byte count, the service's own total) before reasoning from it."
+policy: docs/POLICY.md
+privacy:
+  requires_raw_conversation: false

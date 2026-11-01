@@ -8,10 +8,16 @@ The registry must never contain raw user conversations or private project data.
 
 ```text
 knowledge/
-├── patterns/
-├── providers/
-└── optimization-rules/
+├── pack.json      versioned index of every rule, with severity and category
+├── patterns/      one file per rule: signals, problem, recommendation
+├── rules/         detector trigger definitions
+└── pricing.json
 ```
+
+Every rule in `pack.json` has a matching `patterns/<id>.yml`, and the test suite
+checks that. Categories follow the sections of the policy in
+[docs/POLICY.md](../docs/POLICY.md): tiers, plan delegate review, briefs, context,
+verification, shared resources and credentials.
 
 ## Pattern example
 

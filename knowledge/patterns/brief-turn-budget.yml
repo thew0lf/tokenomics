@@ -1,0 +1,13 @@
+id: brief-turn-budget
+version: 1
+pattern: turn_budget_exhausted
+category: briefs
+severity: high
+signals:
+  - "a delegated agent stops at its turn limit"
+  - "a delegated agent returns no output file"
+problem: "An agent that runs out of turns mid investigation returns nothing, and every token it spent is lost."
+recommendation: "Give every brief a turn budget matched to the task and a write early rule with a named output path."
+policy: docs/POLICY.md
+privacy:
+  requires_raw_conversation: false

@@ -1,5 +1,6 @@
 import hashlib
 import os
+from pathlib import Path
 
 import pytest
 
@@ -39,3 +40,25 @@ def test_installed_pack_is_private_on_posix(tmp_path):
     path = tmp_path / "pack.json"
     install_pack(b'{"version":"1.1.0","rules":[]}', path)
     assert path.stat().st_mode & 0o777 == 0o600
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def test_bundled_pack_loads_and_every_rule_has_a_pattern_file():
+    pack = load_pack(REPO_ROOT / "knowledge" / "pack.json")
+    rules = pack["rules"]
+    ids = [rule["id"] for rule in rules]
+    assert len(ids) == len(set(ids))
+    for rule in rules:
+        assert rule["severity"] in {"high", "medium", "low"}
+        pattern_file = REPO_ROOT / "knowledge" / "patterns" / f"{rule['id']}.yml"
+        assert pattern_file.is_file(), rule["id"]
+        text = pattern_file.read_text(encoding="utf-8")
+        assert f"id: {rule['id']}\n" in text
+        assert "requires_raw_conversation: false" in text
+
+
+def test_bundled_policy_document_exists():
+    pack = load_pack(REPO_ROOT / "knowledge" / "pack.json")
+    assert (REPO_ROOT / pack["policy"]).is_file()

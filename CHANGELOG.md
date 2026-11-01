@@ -4,8 +4,20 @@ All notable changes to Tokenomics will be documented here.
 
 ## Unreleased
 
+### Fixed
+
+- `tokenomics.__version__` now matches the package version in `pyproject.toml`.
+
 ### Added
 
+- A full team policy in `docs/POLICY.md`: tiers by judgment, plan delegate
+  review, brief requirements (stop condition, hand back rule, turn budget, write
+  early, allowed commands), context ceilings that trigger a hand off (compact versus clear, state file
+  contents and test, post refresh usage review), verification
+  rules, shared resources one user at a time, credential handling and measurement.
+- Knowledge pack 1.1.0 with fifteen policy patterns, a category per rule, and a
+  pointer to the policy document.
+- Tests that the bundled pack loads and every rule has a pattern file.
 - Provider-neutral, recommendation-only cost-aware planning with caller-supplied
   model profiles, capability/complexity checks, handoff-overhead accounting,
   optional minimum-savings alerts, and risk-based review gates.

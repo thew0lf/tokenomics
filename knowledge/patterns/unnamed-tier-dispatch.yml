@@ -1,0 +1,13 @@
+id: unnamed-tier-dispatch
+version: 1
+pattern: unnamed_tier_dispatch
+category: tiers
+severity: medium
+signals:
+  - "a dispatch names no model or tier"
+  - "bulk reading runs on the working tier"
+problem: "An unnamed dispatch inherits the session's tier, so bulk work lands on the most expensive model."
+recommendation: "Every dispatch names its tier; refuse a dispatch that does not, and never fork the session for bulk reading."
+policy: docs/POLICY.md
+privacy:
+  requires_raw_conversation: false

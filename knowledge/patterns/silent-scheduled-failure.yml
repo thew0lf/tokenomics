@@ -1,0 +1,13 @@
+id: silent-scheduled-failure
+version: 1
+pattern: silent_scheduled_failure
+category: verification
+severity: high
+signals:
+  - "scheduled or deploy runs fail with no notification"
+  - "a credential used by a pipeline was removed"
+problem: "Failed scheduled and deploy jobs can go unnoticed for months and look exactly like jobs nobody needs."
+recommendation: "Every scheduled job and deploy pipeline alerts a channel a human reads on failure; fix or retire a red run within a day."
+policy: docs/POLICY.md
+privacy:
+  requires_raw_conversation: false

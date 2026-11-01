@@ -1,0 +1,13 @@
+id: unsplit-path-list
+version: 1
+pattern: unsplit_path_list
+category: verification
+severity: high
+signals:
+  - "a shell variable holds several paths or options as one string"
+  - "staged file count differs from the intended count"
+problem: "Some shells do not split an unquoted variable, so a multi file commit silently takes only part of the change."
+recommendation: "Pass paths explicitly or through an array and compare the staged count with the intended count before committing."
+policy: docs/POLICY.md
+privacy:
+  requires_raw_conversation: false

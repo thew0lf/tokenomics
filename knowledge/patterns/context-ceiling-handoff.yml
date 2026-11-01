@@ -1,0 +1,13 @@
+id: context-ceiling-handoff
+version: 1
+pattern: context_ceiling
+category: context
+severity: high
+signals:
+  - "session context passes the team ceiling per turn"
+  - "working and top tier share of weighted usage exceeds its target"
+problem: "A long session re-reads its whole history on the most expensive tier every turn, and a reminder alone does not stop it."
+recommendation: "Treat the ceiling as a hand off trigger: write a state file, test it with a fresh standard tier agent, and continue in a fresh session."
+policy: docs/POLICY.md
+privacy:
+  requires_raw_conversation: false
