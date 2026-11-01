@@ -186,7 +186,7 @@ workflow.
 Tokenomics ships with a working policy for teams that build with AI agents and
 want to ship at cost: tiers chosen by judgment, plan on a strong tier and execute
 on a cheaper one, briefs with a stop condition, hand back rule, turn budget and
-write early rule, context ceilings that trigger a hand off, verification rules
+write early rule, context ceilings that trigger a hand off (state file, compact versus clear, post refresh usage review), verification rules
 (positive controls on zeros, truncation, implausible numbers, a commit is not a
 deploy), shared resources one user at a time, credentials never printed, and
 measurement per agent. Read it in [docs/POLICY.md](docs/POLICY.md). Each rule

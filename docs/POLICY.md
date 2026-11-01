@@ -185,6 +185,11 @@ the way in and again on every later turn.
   it deserves doubt, say why.
 - **One session per topic.** A small question late in a long session pays for
   every earlier topic.
+- **A large main context taxes every inline call.** Each tool call the delegating
+  session makes itself re-reads the whole history, so the same lookup costs more
+  the longer the session has run. Before an inline call, ask whether a
+  background agent on a lower tier could do it; inline work also blocks the
+  human.
 - **Large output never lands in the delegating session.** A call likely to return
   more than about 10K characters runs inside an agent that returns only the
   answer, or is trimmed before it lands. The settling check is the exception.
@@ -204,10 +209,36 @@ the way in and again on every later turn.
   waiting on a human with its default, the next three steps, every running agent
   and what it returns, and pointers to existing records. No credentials and no
   personal data; name where they live instead.
+- **Offer the refresh; a model cannot start one.** At a topic change, or at about
+  the per turn ceiling, the session tells the human and offers the state file
+  and the command. It never starts a new session or compacts itself.
+- **Compact or clear.** Compact when the next work is the same topic: give the
+  command a focus line that names the state file and the open items, and write
+  the state file first, because a summary keeps the shape of the work and loses
+  its identifiers. Clear, or start a new session, when the topic changes: it
+  drops the conversation and restarts from memory, which is cheaper for anything
+  that is not a direct continuation. Idle context past the cache lifetime is
+  paid for again on return, so a long absence is also a reason to refresh.
+- **Before a refresh, finish or stop background work.** Let running agents and
+  loops end or stop them, record any that continue with what each produces and
+  where, and stop containers the work started. Move durable facts out of the
+  conversation: corrections to memory, decisions to the task's plan or report
+  file, observed waste to the waste log.
 - **Test the state file.** A fresh standard tier agent given only the file must
   answer what is live, what waits on a human, and what must not ship without
   approval. Any question it cannot answer exactly is a gap to fix before the
   hand off.
+- **Verify the state file against the system of record.** The working tier checks
+  every claim in it that could be stale (branch heads, approvals, pipeline
+  results, ticket statuses) before the fresh agent test, and any gap is fixed
+  first. After the refresh, the new session reads the state file and the records
+  it points to, re-checks what may have moved, and does not re-read the old
+  transcript; if something is missing, it asks the human.
+- **Review usage after a refresh.** Once a session has been compacted or cleared,
+  and before work resumes, check the standard for drift and run a usage review on
+  the standard tier: tier share per agent against its target, inline lookups that
+  should have been delegated, and sessions that ran past the ceiling. The review
+  returns optimizations; it changes no rule on its own.
 - **Standing text has a budget.** Instruction files, memory indexes, agent and
   skill catalogs, tool names and hook text are paid on every call of every
   session. Give each standing file a budget from a measured baseline, measure it
@@ -233,6 +264,10 @@ it. Work built on an unverified assumption is paid for twice.
   exactly zero is evidence about the measurement before it is evidence about the
   world. A count that contradicts one already observed is a parsing bug until
   proven otherwise.
+- **A local copy of a remote reference is a snapshot.** Compare it with the live
+  head before reporting a merge or conflict result. A failure seen only under an
+  override you added is about the override; re-run at the configured setting
+  first.
 - **Re-measure after the thing measured changes.** A stale number quoted with
   confidence is worse than none.
 - **Never suppress stderr on a reported result.** Capture output, check the exit
