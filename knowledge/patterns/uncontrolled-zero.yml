@@ -1,0 +1,12 @@
+id: uncontrolled-zero
+version: 1
+pattern: uncontrolled_zero
+category: verification
+severity: high
+signals:
+  - "a search or count reports zero with no control run through the same filter"
+problem: "A broken filter returns the same zero as a real absence."
+recommendation: "Run the same probe through the same filter shaped to match something that must exist, and say which zeros were controlled."
+policy: docs/POLICY.md
+privacy:
+  requires_raw_conversation: false

@@ -1,0 +1,13 @@
+id: repeated-context
+version: 1
+pattern: repeated_context
+category: context
+severity: medium
+signals:
+  - "the same large input is resent on consecutive calls"
+  - "a file already read is read again to confirm a known fact"
+problem: "Stable context is paid for again on every call that resends it."
+recommendation: "Establish a fact once and refer to the conclusion; name files in briefs instead of rediscovering them."
+policy: docs/POLICY.md
+privacy:
+  requires_raw_conversation: false

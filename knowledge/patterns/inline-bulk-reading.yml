@@ -1,0 +1,13 @@
+id: inline-bulk-reading
+version: 1
+pattern: inline_bulk_reading
+category: plan-delegate-review
+severity: medium
+signals:
+  - "several consecutive inline lookups in the delegating session"
+  - "output over about 10K characters lands in the delegating session"
+problem: "Intermediate output read once is paid again on every later turn of the delegating session."
+recommendation: "Delegate work whose answer is a verdict to a lower tier and re-run only the settling check."
+policy: docs/POLICY.md
+privacy:
+  requires_raw_conversation: false

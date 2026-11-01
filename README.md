@@ -181,6 +181,17 @@ risk-based review gates; it never switches models or dispatches work.
 See [cost-aware planning](docs/PLANNING.md) for the local CLI and host-integration
 workflow.
 
+## Policy
+
+Tokenomics ships with a working policy for teams that build with AI agents and
+want to ship at cost: tiers chosen by judgment, plan on a strong tier and execute
+on a cheaper one, briefs with a stop condition, hand back rule, turn budget and
+write early rule, context ceilings that trigger a hand off, verification rules
+(positive controls on zeros, truncation, implausible numbers, a commit is not a
+deploy), shared resources one user at a time, credentials never printed, and
+measurement per agent. Read it in [docs/POLICY.md](docs/POLICY.md). Each rule
+also appears as a privacy safe pattern in the [knowledge pack](knowledge/pack.json).
+
 ## Privacy
 
 Tokenomics is built around a hard architectural boundary:
@@ -326,6 +337,7 @@ Every significant feature passes two engineering review lenses and a security ch
 - [Architecture](docs/ARCHITECTURE.md)
 - [MVP](docs/MVP.md)
 - [MCP](docs/MCP.md)
+- [Policy](docs/POLICY.md)
 - [Cost-aware planning](docs/PLANNING.md)
 - [Knowledge](docs/KNOWLEDGE.md)
 - [Reviews](docs/REVIEWS.md)

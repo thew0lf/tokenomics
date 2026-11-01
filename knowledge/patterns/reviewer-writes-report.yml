@@ -1,0 +1,13 @@
+id: reviewer-writes-report
+version: 1
+pattern: reviewer_report_retyped
+category: plan-delegate-review
+severity: medium
+signals:
+  - "a review agent has no file write permission"
+  - "the delegating session writes a long report from an agent's reply"
+problem: "The delegating session retypes the reviewer's findings, paying for them twice on the most expensive tier."
+recommendation: "Let review agents write their report to a named path and have the delegating session read only the verdict."
+policy: docs/POLICY.md
+privacy:
+  requires_raw_conversation: false

@@ -1,20 +1,108 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "rules": [
     {
       "id": "ai-polling",
       "pattern": "ai_polling",
-      "severity": "high"
+      "severity": "high",
+      "category": "context"
     },
     {
       "id": "hidden-errors",
       "pattern": "hidden_errors",
-      "severity": "high"
+      "severity": "high",
+      "category": "verification"
     },
     {
       "id": "repeated-context",
       "pattern": "repeated_context",
-      "severity": "medium"
+      "severity": "medium",
+      "category": "context"
+    },
+    {
+      "id": "context-ceiling-handoff",
+      "pattern": "context_ceiling",
+      "severity": "high",
+      "category": "context"
+    },
+    {
+      "id": "brief-turn-budget",
+      "pattern": "turn_budget_exhausted",
+      "severity": "high",
+      "category": "briefs"
+    },
+    {
+      "id": "reviewer-writes-report",
+      "pattern": "reviewer_report_retyped",
+      "severity": "medium",
+      "category": "plan-delegate-review"
+    },
+    {
+      "id": "unlisted-command",
+      "pattern": "command_outside_brief",
+      "severity": "high",
+      "category": "briefs"
+    },
+    {
+      "id": "unnamed-tier-dispatch",
+      "pattern": "unnamed_tier_dispatch",
+      "severity": "medium",
+      "category": "tiers"
+    },
+    {
+      "id": "inline-bulk-reading",
+      "pattern": "inline_bulk_reading",
+      "severity": "medium",
+      "category": "plan-delegate-review"
+    },
+    {
+      "id": "uncontrolled-zero",
+      "pattern": "uncontrolled_zero",
+      "severity": "high",
+      "category": "verification"
+    },
+    {
+      "id": "truncated-result",
+      "pattern": "truncated_result",
+      "severity": "high",
+      "category": "verification"
+    },
+    {
+      "id": "implausible-number",
+      "pattern": "implausible_number",
+      "severity": "medium",
+      "category": "verification"
+    },
+    {
+      "id": "commit-not-deploy",
+      "pattern": "unverified_deploy",
+      "severity": "high",
+      "category": "verification"
+    },
+    {
+      "id": "silent-scheduled-failure",
+      "pattern": "silent_scheduled_failure",
+      "severity": "high",
+      "category": "verification"
+    },
+    {
+      "id": "unsplit-path-list",
+      "pattern": "unsplit_path_list",
+      "severity": "high",
+      "category": "verification"
+    },
+    {
+      "id": "shared-resource-contention",
+      "pattern": "shared_resource_contention",
+      "severity": "high",
+      "category": "shared-resources"
+    },
+    {
+      "id": "credential-print",
+      "pattern": "credential_print",
+      "severity": "high",
+      "category": "credentials"
     }
-  ]
+  ],
+  "policy": "docs/POLICY.md"
 }

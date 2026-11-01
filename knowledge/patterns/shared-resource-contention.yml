@@ -1,0 +1,12 @@
+id: shared-resource-contention
+version: 1
+pattern: shared_resource_contention
+category: shared-resources
+severity: high
+signals:
+  - "parallel agents use one test database, preview environment or deploy target"
+problem: "Concurrent users of one stateful resource corrupt each other's results and force reruns."
+recommendation: "One user at a time: parallel builders split code, never the resource, and the delegating session serializes runs and ships."
+policy: docs/POLICY.md
+privacy:
+  requires_raw_conversation: false

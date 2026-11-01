@@ -39,3 +39,11 @@ The application binary and knowledge packs are separate update channels. Knowled
 ## Contribution flow
 
 Contributors should submit generalized rules or aggregate observations through a pull request. Reviewers should reject raw transcripts and private project data. A contribution should explain the pattern, evidence, expected effect, and how it was validated.
+
+## Bundled policy pack
+
+The pack in `knowledge/pack.json` carries the rules of the team policy in
+[POLICY.md](POLICY.md). Each rule has an id, a pattern name, a severity, a
+category, and a pattern file under `knowledge/patterns/` that describes its
+signals, the problem it prevents and the recommendation. None of them require
+conversation contents to leave the local machine.

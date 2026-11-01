@@ -1,0 +1,13 @@
+id: commit-not-deploy
+version: 1
+pattern: unverified_deploy
+category: verification
+severity: high
+signals:
+  - "a change is reported as live after a commit or a merge"
+  - "a deploy is reported without fetching the result"
+problem: "Written, merged, released and running are different states; claiming the last from an earlier one ships surprises."
+recommendation: "Fetch what a stranger receives and assert on its contents before calling a change deployed."
+policy: docs/POLICY.md
+privacy:
+  requires_raw_conversation: false

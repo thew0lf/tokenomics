@@ -1,0 +1,12 @@
+id: unlisted-command
+version: 1
+pattern: command_outside_brief
+category: briefs
+severity: high
+signals:
+  - "a delegated agent runs a command its brief did not list"
+problem: "An agent acting outside its brief can touch systems nobody approved and produces work nobody planned to check."
+recommendation: "List the allowed commands and tools in every brief; anything else is a hand back."
+policy: docs/POLICY.md
+privacy:
+  requires_raw_conversation: false

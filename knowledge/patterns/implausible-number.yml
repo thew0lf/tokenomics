@@ -1,0 +1,12 @@
+id: implausible-number
+version: 1
+pattern: implausible_number
+category: verification
+severity: medium
+signals:
+  - "a measurement is exactly zero, suspiciously round, or contradicts one already observed"
+problem: "A wrong measurement quoted with confidence costs more to correct than to check."
+recommendation: "Treat an implausible number as a failed check and re-measure before reporting it."
+policy: docs/POLICY.md
+privacy:
+  requires_raw_conversation: false
